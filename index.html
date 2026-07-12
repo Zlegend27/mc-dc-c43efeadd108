@@ -1,138 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>District Texter</title>
 <style>
-  :root{ --bg:#f5f5f7; --card:#fff; --ink:#1d1d1f; --sub:#6e6e73; --line:#e3e3e8; --accent:#c8102e; --accent2:#0a84ff; --ok:#34c759; }
-  @media (prefers-color-scheme: dark){ :root{ --bg:#000; --card:#1c1c1e; --ink:#f5f5f7; --sub:#98989f; --line:#2c2c2e; } }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{margin:0;font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:120px}
-  header{position:sticky;top:0;z-index:5;background:var(--accent);color:#fff;padding:14px 16px calc(14px);padding-top:max(14px,env(safe-area-inset-top))}
-  header h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.2px}
-  header p{margin:2px 0 0;font-size:12.5px;opacity:.9}
-  .tabs{display:flex;gap:8px;padding:12px 16px 4px}
-  .tab{flex:1;text-align:center;padding:9px;border-radius:10px;background:var(--card);border:1px solid var(--line);font-weight:600;font-size:14px;color:var(--sub)}
-  .tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-  .wrap{padding:8px 12px}
-  .store{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:10px 0;overflow:hidden}
-  .store h2{margin:0;font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--sub);padding:12px 14px 6px;display:flex;justify-content:space-between;align-items:center}
-  .goalrow{display:flex;align-items:center;gap:8px;padding:0 14px 10px;flex-wrap:wrap}
-  .goalrow .f{display:flex;flex-direction:column;gap:2px}
-  .goalrow label{font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--sub)}
-  .goalrow input{width:88px;font:15px/1 inherit;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:8px;padding:6px 7px;background:var(--bg);color:var(--ink)}
-  .goalrow .today input{color:var(--ink);font-weight:600}
-  .goalrow .ly input{color:var(--sub)}
-  .goalpill{margin-left:auto;background:var(--accent);color:#fff;font-weight:700;font-variant-numeric:tabular-nums;padding:8px 12px;border-radius:10px;font-size:15px;white-space:nowrap}
-  .goalpill small{display:block;font-size:9px;font-weight:600;opacity:.85;letter-spacing:.3px;text-transform:uppercase}
-  .person{display:flex;align-items:center;gap:12px;padding:11px 14px;border-top:1px solid var(--line);cursor:pointer}
-  .person:active{background:rgba(120,120,128,.08)}
-  .cbx{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);flex:0 0 auto;display:grid;place-items:center;font-size:15px;color:#fff}
-  .person.sel .cbx{background:var(--ok);border-color:var(--ok)}
-  .nm{font-weight:600}
-  .ph{font-size:12px;color:var(--sub)}
-  .noph{color:var(--accent);font-size:12px;font-weight:600}
-  .bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;z-index:6}
-  .cnt{font-weight:700}.cnt small{color:var(--sub);font-weight:500}
-  .btn{margin-left:auto;background:var(--accent2);color:#fff;border:none;border-radius:12px;padding:13px 20px;font:inherit;font-weight:700}
-  .btn:disabled{opacity:.4}
-  dialog{border:none;border-radius:18px;padding:0;max-width:440px;width:92%;background:var(--card);color:var(--ink)}
-  dialog::backdrop{background:rgba(0,0,0,.5)}
-  .dlg-h{padding:16px 18px;border-bottom:1px solid var(--line);font-weight:700}
-  .queue{max-height:60vh;overflow:auto}
-  .qrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
-  .qrow.done{opacity:.5}
-  .qname{font-weight:600}.qmall{font-size:12px;color:var(--sub)}
-  .send{margin-left:auto;background:var(--ok);color:#fff;text-decoration:none;border-radius:10px;padding:9px 16px;font-weight:700;font-size:14px}
-  .qrow.done .send{background:var(--sub)}
-  .dlg-f{padding:12px 16px;display:flex;gap:10px}
-  .dlg-f button{flex:1;padding:12px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:600}
-  .tmpl{padding:10px 14px}
-  .tmpl textarea{width:100%;min-height:88px;font:14px/1.4 inherit;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);color:var(--ink);resize:vertical}
-  .hint{font-size:11.5px;color:var(--sub);padding:2px 2px 0}
-  details{margin:8px 12px}summary{font-size:13px;color:var(--sub);font-weight:600}
-  .lytable{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
-  .lytable th{font-weight:600;color:var(--sub);text-align:center;padding:4px 2px;font-size:10.5px;text-transform:uppercase}
-  .lytable td{padding:3px 2px;text-align:center}
-  .lytable td:first-child{text-align:left;font-weight:600;color:var(--ink);white-space:nowrap;padding-right:8px}
-  .lytable input{width:100%;max-width:56px;font:12.5px/1 inherit;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:6px;padding:5px 2px;background:var(--bg);color:var(--ink);text-align:center}
-  .lytable-wrap{overflow-x:auto}
-  .lysaved{font-size:11.5px;color:var(--ok);font-weight:600;padding:6px 2px 0;min-height:16px}
-  .paste textarea{width:100%;min-height:100px;font:12.5px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);color:var(--ink);resize:vertical}
-  .pasterow{display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap}
-  .pasterow button{background:var(--accent2);color:#fff;border:none;border-radius:10px;padding:10px 16px;font:inherit;font-weight:700}
-  .pastemsg{font-size:12px;color:var(--sub)}
-  .pastemsg.ok{color:var(--ok);font-weight:600}
-  .pastemsg.warn{color:var(--accent);font-weight:600}
+:root{
+  --paper:#f5f2ef; --card:#ffffff; --line:#e7e1db; --ink:#1a1a1d; --sub:#75717c;
+  --accent:#cf2a42; --accent-ink:#ffffff; --accent-soft:#fbe4e6;
+  --ok:#1f9d5a; --ok-soft:#e1f6e8; --warn:#c8790a; --warn-soft:#fdedd3;
+  --chip:#efe9e2; --shadow: 0 1px 2px rgba(20,16,12,.06), 0 6px 16px rgba(20,16,12,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --paper:#111113; --card:#1b1b1e; --line:#2b2a2e; --ink:#f2f0ee; --sub:#9b98a1;
+    --accent:#ef4a5f; --accent-ink:#1a0507; --accent-soft:#3a1418;
+    --ok:#37c977; --ok-soft:#123322; --warn:#f0a730; --warn-soft:#3a2a10; --chip:#252428;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 20px rgba(0,0,0,.35); }
+}
+:root[data-theme="light"]{ --paper:#f5f2ef; --card:#ffffff; --line:#e7e1db; --ink:#1a1a1d; --sub:#75717c; --accent:#cf2a42; --accent-ink:#ffffff; --accent-soft:#fbe4e6; --ok:#1f9d5a; --ok-soft:#e1f6e8; --warn:#c8790a; --warn-soft:#fdedd3; --chip:#efe9e2; }
+:root[data-theme="dark"]{ --paper:#111113; --card:#1b1b1e; --line:#2b2a2e; --ink:#f2f0ee; --sub:#9b98a1; --accent:#ef4a5f; --accent-ink:#1a0507; --accent-soft:#3a1418; --ok:#37c977; --ok-soft:#123322; --warn:#f0a730; --warn-soft:#3a2a10; --chip:#252428; }
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font:16px/1.42 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;background:var(--paper);color:var(--ink);padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+@media (prefers-reduced-motion:no-preference){ .cbx,.goalpill,.person,.qrow,button,.seg button{transition:background-color .16s ease, color .16s ease, transform .12s ease, border-color .16s ease} }
+button{font-family:inherit}
+::selection{background:var(--accent-soft)}
+
+/* ---------- top header ---------- */
+header.app{position:sticky;top:0;z-index:5;background:var(--paper);padding:max(14px,env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:8px}
+.brand .mark{width:9px;height:9px;border-radius:2px;background:var(--accent);transform:rotate(45deg);flex:0 0 auto}
+.brand h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.2px}
+.brand .day{margin-left:auto;font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--sub)}
+
+.seg{display:flex;background:var(--chip);border-radius:11px;padding:3px;gap:2px;margin-top:10px}
+.seg button{flex:1;border:none;background:transparent;color:var(--sub);font-weight:700;font-size:13px;padding:8px 6px;border-radius:9px;letter-spacing:.1px}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+
+.floorline{display:flex;align-items:center;gap:6px;margin-top:9px;font-size:12px;color:var(--sub)}
+.floorline b{color:var(--ink);font-variant-numeric:tabular-nums}
+.floorline .dot{width:4px;height:4px;border-radius:50%;background:var(--sub)}
+
+/* ---------- pages ---------- */
+.page{display:none;padding:14px 14px 6px}
+.page.on{display:block}
+
+/* ---------- store card ---------- */
+.store{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+.storehead{display:flex;align-items:center;gap:10px;padding:13px 14px 10px}
+.storehead h2{margin:0;font-size:14.5px;font-weight:800;letter-spacing:-.1px;flex:1;min-width:0}
+.goalpill{position:relative;color:var(--accent-ink);background:var(--accent);font-weight:800;font-variant-numeric:tabular-nums;padding:7px 12px 7px 14px;border-radius:9px;font-size:15px;white-space:nowrap;flex:0 0 auto}
+.goalpill::before{content:"";position:absolute;left:-1px;top:50%;width:8px;height:8px;background:var(--paper);border-radius:50%;transform:translate(-50%,-50%)}
+.goalpill small{display:block;font-size:8.5px;font-weight:700;opacity:.85;letter-spacing:.4px;text-transform:uppercase;line-height:1.3}
+.goalpill.hit{background:var(--ok)}
+.goalpill.floor{background:var(--warn)}
+
+.inputs{display:flex;gap:8px;padding:0 14px 12px}
+.field{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
+.field label{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--sub);font-weight:700;padding-left:1px}
+.field input{width:100%;font:15px/1.2 inherit;font-variant-numeric:tabular-nums;font-weight:600;border:1px solid var(--line);border-radius:9px;padding:8px 9px;background:var(--paper);color:var(--ink)}
+.field input:disabled{color:var(--sub);font-weight:500;background:transparent}
+.field input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+
+.roster{border-top:1px solid var(--line)}
+.person{display:flex;align-items:center;gap:11px;padding:10px 14px;cursor:pointer}
+.person:active{background:var(--paper)}
+.avatar{width:32px;height:32px;border-radius:9px;background:var(--chip);color:var(--sub);flex:0 0 auto;display:grid;place-items:center;font-size:12.5px;font-weight:800}
+.person.sel .avatar{background:var(--ok);color:#fff}
+.pinfo{flex:1;min-width:0}
+.nm{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums}
+.badge{font-size:10.5px;font-weight:700;padding:3px 7px;border-radius:6px;background:var(--warn-soft);color:var(--warn);flex:0 0 auto}
+.cbx{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);flex:0 0 auto;display:grid;place-items:center;font-size:14px;color:transparent;font-weight:800}
+.person.sel .cbx{background:var(--ok);border-color:var(--ok);color:#fff}
+
+/* ---------- bottom action bar (Send page) ---------- */
+.bar{position:fixed;left:0;right:0;bottom:58px;background:var(--card);border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:10px;align-items:center;z-index:6;box-shadow:0 -4px 14px rgba(0,0,0,.05)}
+.cnt{font-weight:700;font-size:14px}.cnt small{color:var(--sub);font-weight:600}
+.btn-go{margin-left:auto;background:var(--accent);color:var(--accent-ink);border:none;border-radius:12px;padding:12px 20px;font:inherit;font-weight:800;font-size:14.5px}
+.btn-go:disabled{opacity:.35}
+
+/* ---------- bottom tab bar ---------- */
+nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:7;display:flex;background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+nav.tabbar button{flex:1;background:transparent;border:none;color:var(--sub);font-weight:700;font-size:10.5px;letter-spacing:.2px;padding:6px 4px 4px;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav.tabbar button .ic{font-size:19px;line-height:1}
+nav.tabbar button.on{color:var(--accent)}
+
+/* ---------- setup page cards ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:14px;box-shadow:var(--shadow);overflow:hidden}
+.card-h{padding:14px 16px 4px}
+.card-h .eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.card-h h3{margin:4px 0 2px;font-size:16.5px;font-weight:800;letter-spacing:-.2px}
+.card-h p{margin:0;font-size:12.5px;color:var(--sub);line-height:1.45}
+.card-b{padding:12px 16px 16px}
+
+textarea.mono{width:100%;min-height:96px;font:12.5px/1.5 ui-monospace,"SF Mono",Menlo,monospace;border:1px solid var(--line);border-radius:11px;padding:11px;background:var(--paper);color:var(--ink);resize:vertical}
+textarea.prose{width:100%;min-height:120px;font:14px/1.5 inherit;border:1px solid var(--line);border-radius:11px;padding:11px;background:var(--paper);color:var(--ink);resize:vertical}
+.rowline{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.btn-primary{background:var(--accent);color:var(--accent-ink);border:none;border-radius:10px;padding:10px 16px;font:inherit;font-weight:800;font-size:13.5px}
+.status{font-size:12px;color:var(--sub);font-weight:600}
+.status.ok{color:var(--ok)}
+.status.warn{color:var(--warn)}
+
+.lywrap{overflow-x:auto;margin-top:8px;border:1px solid var(--line);border-radius:11px}
+table.ly{width:100%;border-collapse:collapse;font-size:12px;min-width:520px}
+table.ly th{font-weight:700;color:var(--sub);text-align:center;padding:8px 4px;font-size:10px;text-transform:uppercase;background:var(--paper);position:sticky;top:0}
+table.ly td{padding:5px 4px;text-align:center;border-top:1px solid var(--line)}
+table.ly td:first-child{text-align:left;font-weight:700;color:var(--ink);white-space:nowrap;padding-left:10px;position:sticky;left:0;background:var(--card)}
+table.ly input{width:100%;max-width:58px;font:12px/1 inherit;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:7px;padding:6px 2px;background:var(--paper);color:var(--ink);text-align:center}
+
+.bucketseg{display:flex;gap:6px;background:var(--chip);border-radius:10px;padding:3px;margin-bottom:12px}
+.bucketseg button{flex:1;border:none;background:transparent;color:var(--sub);font-weight:700;font-size:12px;padding:8px 4px;border-radius:8px}
+.bucketseg button.on{background:var(--accent);color:var(--accent-ink)}
+.floorfield{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.floorfield label{font-size:12.5px;font-weight:700;color:var(--sub)}
+.floorfield input{width:90px;font:14px/1 inherit;font-weight:700;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:9px;padding:8px 9px;background:var(--paper);color:var(--ink)}
+.hint{font-size:11.5px;color:var(--sub);line-height:1.5;margin-top:8px}
+.hint b{color:var(--ink)}
+
+/* ---------- send dialog ---------- */
+dialog{border:none;border-radius:20px;padding:0;max-width:440px;width:92%;background:var(--card);color:var(--ink)}
+dialog::backdrop{background:rgba(10,8,6,.55)}
+.dlg-h{padding:16px 18px;border-bottom:1px solid var(--line)}
+.dlg-h b{display:block;font-size:15px;font-weight:800}
+.dlg-h span{font-size:12px;color:var(--sub)}
+.queue{max-height:56vh;overflow:auto}
+.qrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.qrow.done{opacity:.45}
+.qname{font-weight:700;font-size:14px}.qmall{font-size:11.5px;color:var(--sub);font-variant-numeric:tabular-nums}
+.send{margin-left:auto;background:var(--ok);color:#fff;text-decoration:none;border-radius:10px;padding:9px 15px;font-weight:800;font-size:13.5px;flex:0 0 auto}
+.qrow.done .send{background:var(--sub)}
+.dlg-f{padding:12px 16px;display:flex;gap:10px}
+.dlg-f button{flex:1;padding:12px;border-radius:11px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:700}
 </style>
-<style>
-:root[data-theme="light"]{ --bg:#f5f5f7;--card:#fff;--ink:#1d1d1f;--sub:#6e6e73;--line:#e3e3e8; }
-:root[data-theme="dark"]{ --bg:#000;--card:#1c1c1e;--ink:#f5f5f7;--sub:#98989f;--line:#2c2c2e; }
-</style>
-<header>
-  <h1>🏬 District Texter</h1>
-  <p>Set LY once a week. Type today's sales at each check-in. Tap → text.</p>
+</head>
+<body>
+
+<header class="app">
+  <div class="brand"><span class="mark"></span><h1>District Texter</h1><span class="day" id="dayLabel"></span></div>
+  <div class="seg" id="modeSeg">
+    <button data-mode="openers" class="on">☀️&nbsp; Openers</button>
+    <button data-mode="closers">🌙&nbsp; Closers</button>
+  </div>
+  <div class="floorline"><span id="bucketLabel"></span><span class="dot"></span>floor <b id="floorLabel"></b><span class="dot"></span><span id="floorHint"></span></div>
 </header>
 
-<div class="tabs">
-  <div class="tab on" data-mode="openers">☀️ Openers</div>
-  <div class="tab" data-mode="closers">🌙 Closers</div>
-</div>
+<section class="page on" id="pageSend">
+  <div id="list"></div>
+</section>
 
-<details id="pastedetails" open>
-  <summary>📋 Paste today's Shopify report (auto-fills LY + today's sales)</summary>
-  <div class="tmpl paste">
-    <div class="hint">Paste the combined Shopify export (store, today's sales, last-year-same-weekday sales). It matches each row to a store and fills in both numbers below — no typing per store.</div>
-    <textarea id="pasteBox" placeholder="POS location name,Total sales,Total sales (previous_year_match_day_of_week)&#10;Orland Square,321.73,1391.47&#10;..."></textarea>
-    <div class="pasterow">
-      <button id="applyPaste">Apply to today (&nbsp;<span id="todayLabel"></span>&nbsp;)</button>
-      <span class="pastemsg" id="pasteMsg"></span>
+<section class="page" id="pageSetup">
+
+  <div class="card">
+    <div class="card-h">
+      <div class="eyebrow">Step 1 · Every check-in</div>
+      <h3>📋 Paste today's Shopify report</h3>
+      <p>Paste the combined export — store, today's sales, last-year-same-weekday sales. Matches every store by name and fills in both numbers below in one shot.</p>
+    </div>
+    <div class="card-b">
+      <textarea class="mono" id="pasteBox" placeholder="POS location name,Total sales,Total sales (previous_year_match_day_of_week)&#10;Orland Square,321.73,1391.47&#10;..."></textarea>
+      <div class="rowline">
+        <button class="btn-primary" id="applyPaste">Apply to <span id="todayLabel"></span></button>
+        <span class="status" id="pasteMsg"></span>
+      </div>
     </div>
   </div>
-</details>
 
-<details id="lydetails">
-  <summary>📅 Set this week's LY targets (do this once a week)</summary>
-  <div class="tmpl">
-    <div class="hint">Last year's same-weekday sales per store. Pull these from Shopify once, for the whole upcoming week — they don't change day to day.</div>
-    <div class="lytable-wrap">
-      <table class="lytable" id="lytable">
-        <thead><tr><th>Store</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr></thead>
-        <tbody id="lybody"></tbody>
-      </table>
+  <div class="card">
+    <div class="card-h">
+      <div class="eyebrow">Step 2 · Once a week</div>
+      <h3>📅 This week's LY targets</h3>
+      <p>Last year's same-weekday sales, per store, for the whole upcoming week. These don't change day to day — set once, reused all week.</p>
     </div>
-    <div class="lysaved" id="lysaved"></div>
+    <div class="card-b">
+      <div class="lywrap">
+        <table class="ly" id="lytable">
+          <thead><tr><th>Store</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr></thead>
+          <tbody id="lybody"></tbody>
+        </table>
+      </div>
+      <div class="status ok" id="lysaved" style="min-height:16px;margin-top:8px"></div>
+    </div>
   </div>
-</details>
 
-<details>
-  <summary>✏️ Edit the message template</summary>
-  <div class="tmpl">
-    <textarea id="tmpl"></textarea>
-    <div class="hint">Use <b>{name}</b> and <b>{amount}</b> — they get filled in per person. {amount} = today's live goal for that store.</div>
+  <div class="card">
+    <div class="card-h">
+      <div class="eyebrow">Step 3 · As needed</div>
+      <h3>✏️ Message templates</h3>
+      <p>Wording and the sales-floor rule for each part of the week. {name} and {amount} fill in per person.</p>
+    </div>
+    <div class="card-b">
+      <div class="bucketseg" id="editBucketSeg">
+        <button data-bucket="monthu" class="on">Mon–Thu</button>
+        <button data-bucket="frisun">Fri &amp; Sun</button>
+        <button data-bucket="sat">Saturday</button>
+      </div>
+      <div class="floorfield">
+        <label>If LY is under</label>
+        <input type="number" id="floorInput" inputmode="decimal">
+        <label>use this instead</label>
+      </div>
+      <textarea class="prose" id="tmplBox"></textarea>
+      <div class="hint">Use <b>{name}</b> and <b>{amount}</b> — {amount} is today's live goal (LY vs. the floor above, minus today's sales).</div>
+    </div>
   </div>
-</details>
 
-<div class="wrap" id="list"></div>
+</section>
 
-<div class="bar">
+<div class="bar" id="sendBar">
   <div class="cnt"><span id="n">0</span> <small>selected</small></div>
-  <button class="btn" id="go" disabled>Start texting →</button>
+  <button class="btn-go" id="go" disabled>Start texting →</button>
 </div>
+
+<nav class="tabbar">
+  <button class="on" data-page="pageSend"><span class="ic">💬</span>Send</button>
+  <button data-page="pageSetup"><span class="ic">⚙️</span>Setup</button>
+</nav>
 
 <dialog id="dlg">
-  <div class="dlg-h">Send in order — tap green, hit send, come back</div>
+  <div class="dlg-h"><b>Send in order</b><span>Tap Text, hit send in Messages, come back for the next one</span></div>
   <div class="queue" id="queue"></div>
   <div class="dlg-f"><button id="close">Done</button></div>
 </dialog>
 
 <script>
 window.__DATA__ = [{"mall":"ARUNDEL MILLS STORE","goal":546,"staff":[{"name":"JAMIE GRIFFIN","phone":"14435917052"},{"name":"ANGELINA TRAN","phone":"12405596289"},{"name":"ARIELLE MABREY","phone":"16672891642"}]},{"mall":"CAROLINA PLACE","goal":54,"staff":[{"name":"Evelyn \"Evie\" Stewart","phone":"17049898319"},{"name":"Ah'venique Francis","phone":"17047722068"},{"name":"ALYSON AVERETTE","phone":"19843036629"}]},{"mall":"CASTLETON SQUARE","goal":411,"staff":[{"name":"SHARRECE FRYE","phone":"18125815225"},{"name":"Tainesha Lovett","phone":"17737339819"},{"name":"JYLIAN WALKER","phone":"13177192861"}]},{"mall":"GALLERIA FORT LAUDERDALE","goal":926,"staff":[{"name":"MARBELLA MARTINEZ","phone":"19545341237"},{"name":"Kimonie Altidor","phone":"15618840031"},{"name":"MOLLY OATES","phone":"9548509334"},{"name":"Beatrice Piludu","phone":"17868930250"}]},{"mall":"GURNEE MILLS","goal":533,"staff":[{"name":"AURORA  AREVALO","phone":"12244408645"},{"name":"LINDSEY CARREON","phone":"12247629820"},{"name":"GWEN MOORE","phone":"17086031480"}]},{"mall":"KING OF PRUSSIA STORE","goal":624,"staff":[{"name":"DIANA BRAVO","phone":"12157911467"},{"name":"ALAYNE MCPHAIL","phone":"12159770389"},{"name":"DAYONNA THOMAS","phone":"12679167479"}]},{"mall":"ORLAND SQUARE","goal":1391,"staff":[{"name":"ZAID HAMMAD","phone":"17084657040"},{"name":"MARLY RAMIREZ","phone":"17085004426"},{"name":"DANA THAHER","phone":"17088566583"}]},{"mall":"PALISADES STORE","goal":226,"staff":[{"name":"DANIELLE DELATOUR","phone":"18454134386"},{"name":"Briana Giovinazzo","phone":"18457094015"},{"name":"Sheyli Lemus","phone":"18454059525"},{"name":"Emily Sullivan","phone":"18452701154"}]},{"mall":"SOMERSET COLLECTIONS","goal":2001,"staff":[{"name":"Ariande Quates","phone":"12483467265"},{"name":"Ashley Sussani","phone":"12489855873"},{"name":"Desiree Strickland","phone":"15862784678"}]},{"mall":"SPRINGFIELD STORE","goal":195,"staff":[{"name":"GRACE MCRAE","phone":"17033576756"},{"name":"Lelani Burroughs","phone":"12025829200"}]},{"mall":"TOWSON SQUARE STORE","goal":509,"staff":[{"name":"CADANCE MOYANO","phone":"14436767882"},{"name":"Skiya Godwin","phone":"19102803915"},{"name":"Dominic Link","phone":"16673048193"}]},{"mall":"TREASURE COAST","goal":219,"staff":[{"name":"SHAR WEISENBERG","phone":"14357494025"},{"name":"STEPHANIE MARQUES","phone":"16034043311"},{"name":"ANGELINA ANGEL","phone":"17728018513"},{"name":"HANTZ ETIENNE","phone":"17863821658"},{"name":"LINDSEY JEAN-LEWIS","phone":"15613792735"}]},{"mall":"UTC","goal":0,"staff":[{"name":"Skye Samuel","phone":"19419613178"},{"name":"Sharon Wortman","phone":"19419621888"},{"name":"Briana Damas-Mendez","phone":"19292313400"},{"name":"Andrea Morales","phone":"17604097923"}]},{"mall":"WALDEN GALLERIA","goal":515,"staff":[{"name":"NVIN MOHAMMED","phone":"17162999928"},{"name":"Mike Kowalski","phone":"17169891754"},{"name":"Hajer Yahya","phone":"17164957793"}]},{"mall":"WOODFIELD STORE","goal":1105,"staff":[{"name":"JASMIN MUNOZ","phone":"16304400828"},{"name":"Marcella Krukowski","phone":"13126132669"},{"name":"VICTORIA GONZALEZ","phone":"12246059074"}]}];
-window.__MSG__ = "Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?";
-const data = window.__DATA__, list=document.getElementById('list'), tmpl=document.getElementById('tmpl');
-tmpl.value = window.__MSG__;
+window.__TEMPLATES__ = {"monthu":{"floor":400,"msg":"Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?"},"frisun":{"floor":700,"msg":"Hey {name}! 🎉 Happy Friday! Let's keep that energy up today😍 We only need ${amount} to beat LY — very doable with a couple solid bundles! Text me the code word for today's morning message so I know you're locked in, and what sales goal do you write to hit bonus tonight?"},"sat":{"floor":900,"msg":"Hey {name}! 🥳 It's Sales Saturday — our biggest day of the week, let's make it count! We only need ${amount} to beat LY. Focus on sales only today! Text me the code word for today's morning message so I know you're ready, and what sales goal do you write to hit bonus tonight?"}};
+const data = window.__DATA__;
+const list = document.getElementById('list');
 const sel = new Set();
 const DAY_KEYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAY_FULL=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const todayIdx = (new Date().getDay()+6)%7; // Mon=0..Sun=6
 const todayDateStr = new Date().toISOString().slice(0,10);
+function bucketForIdx(i){ if(i===5) return 'sat'; if(i===4||i===6) return 'frisun'; return 'monthu'; }
+let selectedBucket = bucketForIdx(todayIdx);
+const BUCKET_LABEL={monthu:'Mon–Thu',frisun:'Fri & Sun',sat:'Saturday'};
+
+document.getElementById('dayLabel').textContent = DAY_FULL[todayIdx];
 
 function fmtPhone(d){ if(!d) return ''; if(d.length===10) d='1'+d; return '+'+d; }
 function prettyPhone(d){ if(!d) return ''; let x=d.length===11?d.slice(1):d; return '('+x.slice(0,3)+') '+x.slice(3,6)+'-'+x.slice(6); }
+
+// ---- templates (persisted; per day-bucket message + floor) ----
+const TPL_KEY='districtTexter.templates.v2';
+function loadTemplates(){ try{ const t=JSON.parse(localStorage.getItem(TPL_KEY)); if(t) return t; }catch{} return window.__TEMPLATES__; }
+let templates = loadTemplates();
+function saveTemplates(){ localStorage.setItem(TPL_KEY, JSON.stringify(templates)); }
 
 // ---- LY targets (persisted weekly; edited once, reused all week) ----
 const LY_KEY='districtTexter.ly.v1';
@@ -148,11 +263,15 @@ function loadToday(){ try{ return JSON.parse(localStorage.getItem(TODAY_KEY))||{
 function saveToday(t){ localStorage.setItem(TODAY_KEY, JSON.stringify(t)); }
 let todaySales = loadToday();
 
-// ---- template persistence ----
-const TMPL_KEY='districtTexter.tmpl.v1';
-const savedTmpl = localStorage.getItem(TMPL_KEY);
-if (savedTmpl) tmpl.value = savedTmpl;
-tmpl.addEventListener('input', ()=> localStorage.setItem(TMPL_KEY, tmpl.value));
+function goalInfo(mall){
+  const ly = (lyStore[mall]||[])[todayIdx] || 0;
+  const floor = Number(templates[selectedBucket].floor)||0;
+  const floored = ly < floor;
+  const target = floored ? floor : ly;
+  const sold = Number(todaySales[mall])||0;
+  const goal = Math.round(target - sold);
+  return { ly, floor, floored, target, sold, goal: Math.max(0,goal), hit: goal<=0 };
+}
 
 // ---- Shopify paste import ----
 document.getElementById('todayLabel').textContent = DAY_KEYS[todayIdx];
@@ -176,7 +295,7 @@ function parseCSVText(text){
 document.getElementById('applyPaste').addEventListener('click', ()=>{
   const raw = document.getElementById('pasteBox').value.trim();
   const msg = document.getElementById('pasteMsg');
-  if (!raw) { msg.textContent='Paste the report first.'; msg.className='pastemsg warn'; return; }
+  if (!raw) { msg.textContent='Paste the report first.'; msg.className='status warn'; return; }
   const rows = parseCSVText(raw);
   let matched=0, unmatched=[];
   for (const r of rows) {
@@ -192,16 +311,10 @@ document.getElementById('applyPaste').addEventListener('click', ()=>{
   }
   saveToday(todaySales); saveLy(lyStore);
   renderLyTable(); render();
-  if (matched && !unmatched.length) { msg.textContent='✓ Applied to '+matched+' stores.'; msg.className='pastemsg ok'; }
-  else if (matched) { msg.textContent='✓ Applied to '+matched+' stores. Not matched: '+unmatched.join(', '); msg.className='pastemsg warn'; }
-  else { msg.textContent='No matching stores found — check the paste.'; msg.className='pastemsg warn'; }
+  if (matched && !unmatched.length) { msg.textContent='✓ Applied to '+matched+' stores.'; msg.className='status ok'; }
+  else if (matched) { msg.textContent='✓ Applied to '+matched+'. Not matched: '+unmatched.join(', '); msg.className='status warn'; }
+  else { msg.textContent='No matching stores found — check the paste.'; msg.className='status warn'; }
 });
-
-function goalFor(mall){
-  const ly = (lyStore[mall]||[])[todayIdx] || 0;
-  const sold = Number(todaySales[mall])||0;
-  return Math.max(0, Math.round(ly - sold));
-}
 
 function renderLyTable(){
   const tb=document.getElementById('lybody'); tb.innerHTML='';
@@ -225,22 +338,28 @@ function render(){
   list.innerHTML='';
   for(const s of data){
     const el=document.createElement('div'); el.className='store';
-    const ly = (lyStore[s.mall]||[])[todayIdx] || 0;
-    const goal = goalFor(s.mall);
-    el.innerHTML='<h2>'+s.mall+'</h2>'+
-      '<div class="goalrow">'+
-        '<div class="f ly"><label>LY '+DAY_KEYS[todayIdx]+'</label><input type="text" value="$'+ly.toLocaleString()+'" disabled></div>'+
-        '<div class="f today"><label>Today so far</label><input type="number" inputmode="decimal" placeholder="0" data-today-mall="'+encodeURIComponent(s.mall)+'" value="'+(todaySales[s.mall]!=null?todaySales[s.mall]:'')+'"></div>'+
-        '<div class="goalpill"><small>Goal left</small>$'+goal.toLocaleString()+'</div>'+
-      '</div>';
+    const info = goalInfo(s.mall);
+    const pillClass = info.hit ? 'hit' : (info.floored ? 'floor' : '');
+    el.innerHTML='<div class="storehead"><h2>'+s.mall+'</h2>'+
+        '<div class="goalpill '+pillClass+'"><small>'+(info.hit?'Hit already':(info.floored?'Goal (floor)':'Goal left'))+'</small>$'+info.goal.toLocaleString()+'</div>'+
+      '</div>'+
+      '<div class="inputs">'+
+        '<div class="field"><label>LY '+DAY_KEYS[todayIdx]+'</label><input type="text" value="$'+info.ly.toLocaleString()+'" disabled></div>'+
+        '<div class="field"><label>Today so far</label><input type="number" inputmode="decimal" placeholder="0" data-today-mall="'+encodeURIComponent(s.mall)+'" value="'+(todaySales[s.mall]!=null?todaySales[s.mall]:'')+'"></div>'+
+      '</div>'+
+      '<div class="roster"></div>';
+    const roster = el.querySelector('.roster');
     for(const p of s.staff){
       const id=s.mall+'|'+p.name;
       const row=document.createElement('div'); row.className='person'+(sel.has(id)?' sel':'');
-      row.innerHTML='<div class="cbx">✓</div><div><div class="nm">'+p.name+'</div>'+
-        (p.phone?'<div class="ph">'+prettyPhone(p.phone)+'</div>':'<div class="noph">⚠ no number in sheet</div>')+'</div>';
+      const initials = p.name.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+      row.innerHTML='<div class="avatar">'+initials+'</div><div class="pinfo"><div class="nm">'+titleCase(p.name)+'</div>'+
+        (p.phone?'<div class="ph">'+prettyPhone(p.phone)+'</div>':'')+'</div>'+
+        (p.phone?'':'<div class="badge">no #</div>')+
+        '<div class="cbx">✓</div>';
       if(p.phone){ row.onclick=()=>{ sel.has(id)?sel.delete(id):sel.add(id); row.classList.toggle('sel'); updateCount(); }; }
       else { row.style.opacity=.55; }
-      el.appendChild(row);
+      roster.appendChild(row);
     }
     list.appendChild(el);
   }
@@ -249,26 +368,71 @@ function render(){
       const mall=decodeURIComponent(inp.dataset.todayMall);
       todaySales[mall]=inp.value===''?null:Number(inp.value);
       saveToday(todaySales);
+      const info = goalInfo(mall);
       const pill=inp.closest('.store').querySelector('.goalpill');
-      pill.innerHTML='<small>Goal left</small>$'+goalFor(mall).toLocaleString();
+      pill.className='goalpill '+(info.hit?'hit':(info.floored?'floor':''));
+      pill.innerHTML='<small>'+(info.hit?'Hit already':(info.floored?'Goal (floor)':'Goal left'))+'</small>$'+info.goal.toLocaleString();
     });
   });
 }
+function titleCase(s){ return s.replace(/[A-Za-z']+/g, w=> w[0].toUpperCase()+w.slice(1).toLowerCase()); }
 function updateCount(){ document.getElementById('n').textContent=sel.size; document.getElementById('go').disabled=!sel.size; }
 
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on')); t.classList.add('on');
-});
+// ---- top mode segment (Openers/Closers — organizational only) ----
+document.querySelectorAll('#modeSeg button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#modeSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+}));
 
+// ---- bottom tab bar (Send / Setup) ----
+document.querySelectorAll('nav.tabbar button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('nav.tabbar button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById(b.dataset.page).classList.add('on');
+  document.getElementById('sendBar').style.display = b.dataset.page==='pageSend' ? 'flex' : 'none';
+}));
+
+// ---- floor summary line under header ----
+function renderFloorLine(){
+  document.getElementById('bucketLabel').textContent = BUCKET_LABEL[selectedBucket];
+  document.getElementById('floorLabel').textContent = '$'+Number(templates[selectedBucket].floor).toLocaleString();
+  document.getElementById('floorHint').textContent = 'applies when a store\'s LY is lower';
+}
+
+// ---- template editor (Setup > Step 3) ----
+const editBucketSeg = document.getElementById('editBucketSeg');
+let editingBucket = selectedBucket;
+function loadEditor(){
+  document.getElementById('floorInput').value = templates[editingBucket].floor;
+  document.getElementById('tmplBox').value = templates[editingBucket].msg;
+}
+editBucketSeg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+  editBucketSeg.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  editingBucket = b.dataset.bucket;
+  loadEditor();
+}));
+document.getElementById('floorInput').addEventListener('input', e=>{
+  templates[editingBucket].floor = Number(e.target.value)||0;
+  saveTemplates();
+  if (editingBucket===selectedBucket){ renderFloorLine(); render(); }
+});
+document.getElementById('tmplBox').addEventListener('input', e=>{
+  templates[editingBucket].msg = e.target.value;
+  saveTemplates();
+});
+loadEditor();
+renderFloorLine();
+
+// ---- send queue ----
 document.getElementById('go').onclick=()=>{
   const q=document.getElementById('queue'); q.innerHTML='';
   for(const s of data){ for(const p of s.staff){ const id=s.mall+'|'+p.name; if(!sel.has(id))continue;
-    const amount=goalFor(s.mall).toLocaleString();
+    const info = goalInfo(s.mall);
+    const amount=info.goal.toLocaleString();
     const fn=p.name.split(' ')[0]; const first=fn.charAt(0).toUpperCase()+fn.slice(1).toLowerCase();
-    const body=tmpl.value.replace(/{name}/g,first).replace(/{amount}/g,amount);
+    const body=templates[selectedBucket].msg.replace(/{name}/g,first).replace(/{amount}/g,amount);
     const href='sms:'+fmtPhone(p.phone)+'&body='+encodeURIComponent(body);
     const row=document.createElement('div'); row.className='qrow';
-    row.innerHTML='<div><div class="qname">'+p.name+'</div><div class="qmall">'+s.mall+' • goal $'+amount+'</div></div>'+
+    row.innerHTML='<div><div class="qname">'+titleCase(p.name)+'</div><div class="qmall">'+s.mall+' • goal $'+amount+'</div></div>'+
       '<a class="send" href="'+href+'">Text ›</a>';
     row.querySelector('.send').addEventListener('click',()=>{ setTimeout(()=>row.classList.add('done'),400); });
     q.appendChild(row);
@@ -276,5 +440,8 @@ document.getElementById('go').onclick=()=>{
   document.getElementById('dlg').showModal();
 };
 document.getElementById('close').onclick=()=>document.getElementById('dlg').close();
+
 renderLyTable(); render(); updateCount();
 </script>
+</body>
+</html>
