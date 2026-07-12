@@ -1,9 +1,3 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>District Texter</title>
 <style>
 :root{
   --paper:#f5f2ef; --card:#ffffff; --line:#e7e1db; --ink:#1a1a1d; --sub:#75717c;
@@ -135,8 +129,10 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
 .dlg-f{padding:12px 16px;display:flex;gap:10px}
 .dlg-f button{flex:1;padding:12px;border-radius:11px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:700}
 </style>
-</head>
-<body>
+<style>
+:root[data-theme="light"]{ --bg:#f5f5f7;--card:#fff;--ink:#1d1d1f;--sub:#6e6e73;--line:#e3e3e8; }
+:root[data-theme="dark"]{ --bg:#000;--card:#1c1c1e;--ink:#f5f5f7;--sub:#98989f;--line:#2c2c2e; }
+</style>
 
 <header class="app">
   <div class="brand"><span class="mark"></span><h1>District Texter</h1><span class="day" id="dayLabel"></span></div>
@@ -172,30 +168,9 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
 
   <div class="card">
     <div class="card-h">
-      <div class="eyebrow">Step 2 · Once a week</div>
-      <h3>📅 This week's LY targets</h3>
-      <p>Last year's same-weekday numbers, per store, for the whole upcoming week. These don't change day to day — set once, reused all week.</p>
-    </div>
-    <div class="card-b">
-      <div class="bucketseg" id="lyGridSeg">
-        <button data-grid="sales" class="on">Total sales</button>
-        <button data-grid="aov">Average order</button>
-      </div>
-      <div class="lywrap">
-        <table class="ly" id="lytable">
-          <thead><tr><th>Store</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr></thead>
-          <tbody id="lybody"></tbody>
-        </table>
-      </div>
-      <div class="status ok" id="lysaved" style="min-height:16px;margin-top:8px"></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-h">
-      <div class="eyebrow">Step 3 · As needed</div>
+      <div class="eyebrow">Step 2 · As needed</div>
       <h3>✏️ Opener / Closer templates</h3>
-      <p>Wording and the sales-floor rule for each part of the week. Every text also gets an automatic stat drop (LY total, LY average order, $/hr) appended below your message.</p>
+      <p>Wording and the sales-floor rule for each part of the week. Every text also gets an automatic stat drop (LY total, LY average order, $/hr) appended below your message. LY numbers themselves come from Step 1's paste, or can be tweaked right on each store's card in Send.</p>
     </div>
     <div class="card-b">
       <div class="bucketseg" id="editBucketSeg">
@@ -215,7 +190,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
 
   <div class="card">
     <div class="card-h">
-      <div class="eyebrow">Step 4 · 1pm &amp; 5pm checks</div>
+      <div class="eyebrow">Step 3 · 1pm &amp; 5pm checks</div>
       <h3>📉 Low Sales template</h3>
       <p>Sent only to stores that are behind on actual sales today — not tied to the opener/closer goal above.</p>
     </div>
@@ -257,6 +232,12 @@ window.__DATA__ = [{"mall":"ARUNDEL MILLS STORE","goal":546,"staff":[{"name":"JA
 window.__TEMPLATES__ = {"monthu":{"floor":400,"msg":"Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?"},"frisun":{"floor":700,"msg":"Hey {name}! 🎉 Happy Friday! Let's keep that energy up today😍 We only need ${amount} to beat LY — very doable with a couple solid bundles! Text me the code word for today's morning message so I know you're locked in, and what sales goal do you write to hit bonus tonight?"},"sat":{"floor":900,"msg":"Hey {name}! 🥳 It's Sales Saturday — our biggest day of the week, let's make it count! We only need ${amount} to beat LY. Focus on sales only today! Text me the code word for today's morning message so I know you're ready, and what sales goal do you write to hit bonus tonight?"}};
 window.__LOWTEMPLATE__ = {"threshold":100,"msg":"Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?"};
 const data = window.__DATA__;
+// ---- stores discovered from a Shopify paste that aren't in the Staff Contact sheet yet ----
+const EXTRA_KEY='districtTexter.extraStores.v1';
+function loadExtraMalls(){ try{ return JSON.parse(localStorage.getItem(EXTRA_KEY))||[]; }catch{ return []; } }
+function saveExtraMalls(list){ localStorage.setItem(EXTRA_KEY, JSON.stringify(list)); }
+let extraMalls = loadExtraMalls();
+for (const m of extraMalls) { if (!data.some(s=>s.mall===m)) data.push({mall:m, staff:[]}); }
 const list = document.getElementById('list');
 const sel = new Set();
 const DAY_KEYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -348,17 +329,22 @@ function parseCSVText(text){
   return rows;
 }
 function detectColumns(headerRow){
-  const idx = { loc:0, today:1, ly:2, aov:-1 };
-  let looksLikeHeader = false;
+  // First matching column wins per field — Shopify's export has been seen with a duplicate,
+  // mislabeled 4th column (same "previous_year_match_day_of_week" text as the real LY column,
+  // but it actually holds the %diff). Letting a later match overwrite an earlier one silently
+  // pulled that %diff number in as "LY total sales" — first-match-wins fixes that.
+  const idx = { loc:-1, today:-1, ly:-1, aov:-1 };
   headerRow.forEach((cell,i)=>{
     const c=(cell||'').trim().toLowerCase();
-    if (/pos location|store|mall/.test(c) && i===0){ idx.loc=i; looksLikeHeader=true; }
-    else if (/previous_year|previous year|last year|ly /.test(c) && /average|aov/.test(c)){ idx.aov=i; looksLikeHeader=true; }
-    else if (/average order|aov/.test(c)){ idx.aov=i; looksLikeHeader=true; }
-    else if (/previous_year|previous year|last year/.test(c)){ idx.ly=i; looksLikeHeader=true; }
-    else if (/total sales/.test(c) && idx.ly!==i){ idx.today=i; looksLikeHeader=true; }
+    if (idx.loc===-1 && /pos location|store|mall/.test(c) && i===0){ idx.loc=i; return; }
+    if (idx.aov===-1 && /average order|aov/.test(c)){ idx.aov=i; return; }
+    if (idx.ly===-1 && /previous_year|previous year|last year/.test(c)){ idx.ly=i; return; }
+    if (idx.today===-1 && /total sales/.test(c)){ idx.today=i; return; }
   });
-  return { idx, looksLikeHeader };
+  if (idx.loc===-1) idx.loc=0;
+  if (idx.today===-1) idx.today=1;
+  if (idx.ly===-1) idx.ly=2;
+  return idx;
 }
 document.getElementById('applyPaste').addEventListener('click', ()=>{
   const raw = document.getElementById('pasteBox').value.trim();
@@ -367,57 +353,38 @@ document.getElementById('applyPaste').addEventListener('click', ()=>{
   const rows = parseCSVText(raw);
   let dataRows = rows, idx = { loc:0, today:1, ly:2, aov:3 };
   if (rows.length && /pos location|store|mall/i.test(rows[0][0]||'')) {
-    const det = detectColumns(rows[0]);
-    idx = det.idx;
+    idx = detectColumns(rows[0]);
     dataRows = rows.slice(1);
   }
-  let matched=0, unmatched=[], gotAov=false;
+  let matched=0, added=[], gotAov=false;
   for (const r of dataRows) {
     const loc = (r[idx.loc]||'').trim();
     if (!loc) continue;
-    const mall = canonMall(loc);
+    let mall = canonMall(loc);
+    if (!mall) {
+      // Store not in the Staff Contact sheet yet (e.g. a newly opened mall) — still capture
+      // its numbers instead of dropping the row, so nothing gets silently skipped.
+      mall = loc.toUpperCase().replace(/\s+/g,' ').trim();
+      if (!data.some(s=>s.mall===mall)) { data.push({mall, staff:[]}); added.push(mall); }
+      if (!extraMalls.includes(mall)) { extraMalls.push(mall); saveExtraMalls(extraMalls); }
+      if (!lyStore[mall]) lyStore[mall]=DAY_KEYS.map(()=>0);
+      if (!lyAov[mall]) lyAov[mall]=DAY_KEYS.map(()=>0);
+    }
     const todaySale = parseFloat(r[idx.today]);
     const lySale = parseFloat(r[idx.ly]);
     const aov = idx.aov>=0 ? parseFloat(r[idx.aov]) : NaN;
-    if (!mall) { unmatched.push(loc); continue; }
     if (!isNaN(todaySale)) { todaySales[mall]=Math.round(todaySale); }
     if (!isNaN(lySale)) { lyStore[mall][todayIdx]=Math.round(lySale); }
     if (!isNaN(aov)) { lyAov[mall][todayIdx]=Math.round(aov); gotAov=true; }
     matched++;
   }
   saveToday(todaySales); saveLy(lyStore); saveAov(lyAov);
-  renderLyTable(); render();
+  render();
   const aovNote = gotAov ? '' : ' (no AOV column found — add one to your export to include it in the stat drop)';
-  if (matched && !unmatched.length) { msg.textContent='✓ Applied to '+matched+' stores.'+aovNote; msg.className='status '+(gotAov?'ok':'warn'); }
-  else if (matched) { msg.textContent='✓ Applied to '+matched+'. Not matched: '+unmatched.join(', ')+aovNote; msg.className='status warn'; }
-  else { msg.textContent='No matching stores found — check the paste.'; msg.className='status warn'; }
+  const addedNote = added.length ? ' New store(s) added with no staff yet: '+added.join(', ')+' — add their staff to the Staff Contact sheet.' : '';
+  if (matched) { msg.textContent='✓ Applied to '+matched+' stores.'+aovNote+addedNote; msg.className='status '+(gotAov && !added.length?'ok':'warn'); }
+  else { msg.textContent='No rows found — check the paste.'; msg.className='status warn'; }
 });
-
-let lyGridMode = 'sales'; // 'sales' | 'aov'
-function renderLyTable(){
-  const store = lyGridMode==='sales' ? lyStore : lyAov;
-  const saveFn = lyGridMode==='sales' ? saveLy : saveAov;
-  const tb=document.getElementById('lybody'); tb.innerHTML='';
-  for(const s of data){
-    const tr=document.createElement('tr');
-    tr.innerHTML='<td>'+s.mall+'</td>'+DAY_KEYS.map((d,i)=>'<td><input type="number" inputmode="decimal" data-mall="'+encodeURIComponent(s.mall)+'" data-day="'+i+'" value="'+(store[s.mall][i]||0)+'"></td>').join('');
-    tb.appendChild(tr);
-  }
-  tb.querySelectorAll('input').forEach(inp=>{
-    inp.addEventListener('input',()=>{
-      const mall=decodeURIComponent(inp.dataset.mall), day=Number(inp.dataset.day);
-      store[mall][day]=Number(inp.value)||0;
-      saveFn(store);
-      document.getElementById('lysaved').textContent='✓ Saved — used all week';
-      render();
-    });
-  });
-}
-document.getElementById('lyGridSeg').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
-  document.getElementById('lyGridSeg').querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
-  lyGridMode = b.dataset.grid;
-  renderLyTable();
-}));
 
 function render(){
   list.innerHTML='';
@@ -430,7 +397,7 @@ function render(){
       const pillClass = info.under ? '' : 'hit';
       pillHtml = '<div class="goalpill '+pillClass+'"><small>'+(info.under?'Gap to LY':'On track')+'</small>$'+info.gap.toLocaleString()+'</div>';
       inputsHtml = '<div class="inputs">'+
-          '<div class="field"><label>LY '+DAY_KEYS[todayIdx]+'</label><input type="text" value="$'+info.ly.toLocaleString()+'" disabled></div>'+
+          '<div class="field"><label>LY '+DAY_KEYS[todayIdx]+'</label><input type="number" inputmode="decimal" data-ly-mall="'+encodeURIComponent(s.mall)+'" value="'+info.ly+'"></div>'+
           '<div class="field"><label>Today so far</label><input type="number" inputmode="decimal" placeholder="0" data-today-mall="'+encodeURIComponent(s.mall)+'" value="'+(todaySales[s.mall]!=null?todaySales[s.mall]:'')+'"></div>'+
         '</div>'+
         (info.under? '<div class="badgepill">⚠ under $'+Number(lowTemplate.threshold).toLocaleString()+' today</div>' : '');
@@ -439,8 +406,8 @@ function render(){
       const pillClass = info.hit ? 'hit' : (info.floored ? 'floor' : '');
       pillHtml = '<div class="goalpill '+pillClass+'"><small>'+(info.hit?'Hit already':(info.floored?'Goal (floor)':'Goal left'))+'</small>$'+info.goal.toLocaleString()+'</div>';
       inputsHtml = '<div class="inputs">'+
-          '<div class="field"><label>LY '+DAY_KEYS[todayIdx]+'</label><input type="text" value="$'+info.ly.toLocaleString()+'" disabled></div>'+
-          '<div class="field"><label>LY avg order</label><input type="text" value="$'+info.aov.toLocaleString()+'" disabled></div>'+
+          '<div class="field"><label>LY '+DAY_KEYS[todayIdx]+'</label><input type="number" inputmode="decimal" data-ly-mall="'+encodeURIComponent(s.mall)+'" value="'+info.ly+'"></div>'+
+          '<div class="field"><label>LY avg order</label><input type="number" inputmode="decimal" data-aov-mall="'+encodeURIComponent(s.mall)+'" value="'+info.aov+'"></div>'+
           '<div class="field"><label>Today so far</label><input type="number" inputmode="decimal" placeholder="0" data-today-mall="'+encodeURIComponent(s.mall)+'" value="'+(todaySales[s.mall]!=null?todaySales[s.mall]:'')+'"></div>'+
         '</div>';
     }
@@ -461,10 +428,26 @@ function render(){
     list.appendChild(el);
   }
   list.querySelectorAll('[data-today-mall]').forEach(inp=>{
-    inp.addEventListener('input',()=>{
+    inp.addEventListener('change',()=>{
       const mall=decodeURIComponent(inp.dataset.todayMall);
       todaySales[mall]=inp.value===''?null:Number(inp.value);
       saveToday(todaySales);
+      render();
+    });
+  });
+  list.querySelectorAll('[data-ly-mall]').forEach(inp=>{
+    inp.addEventListener('change',()=>{
+      const mall=decodeURIComponent(inp.dataset.lyMall);
+      lyStore[mall][todayIdx]=Number(inp.value)||0;
+      saveLy(lyStore);
+      render();
+    });
+  });
+  list.querySelectorAll('[data-aov-mall]').forEach(inp=>{
+    inp.addEventListener('change',()=>{
+      const mall=decodeURIComponent(inp.dataset.aovMall);
+      lyAov[mall][todayIdx]=Number(inp.value)||0;
+      saveAov(lyAov);
       render();
     });
   });
@@ -575,7 +558,5 @@ document.getElementById('go').onclick=()=>{
 };
 document.getElementById('close').onclick=()=>document.getElementById('dlg').close();
 
-renderLyTable(); render(); updateCount();
+render(); updateCount();
 </script>
-</body>
-</html>
