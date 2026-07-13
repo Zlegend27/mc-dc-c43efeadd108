@@ -225,7 +225,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
         <label>use this instead</label>
       </div>
       <textarea class="prose" id="tmplBox"></textarea>
-      <div class="hint">Use <b>{name}</b> and <b>{amount}</b> — {amount} is today's live goal (LY vs. the floor above, minus today's sales). The stat drop is added automatically, using 10hrs for Openers and 5hrs for Closers.</div>
+      <div class="hint">Use <b>{name}</b>, <b>{amount}</b>, and <b>{day}</b> (fills in the real day, e.g. "Friday" or "Sunday" — handy since this bucket covers more than one day). {amount} is today's live goal (LY vs. the floor above, minus today's sales). The stat drop is added automatically, using 10hrs for Openers and 5hrs for Closers.</div>
     </div>
   </div>
 
@@ -246,7 +246,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
         <button class="btn-primary" id="lowPreset5pm" style="background:var(--chip);color:var(--ink)">5PM check → $300</button>
       </div>
       <textarea class="prose" id="lowTmplBox"></textarea>
-      <div class="hint">Use <b>{name}</b> and <b>{amount}</b> — {amount} is that store's real LY gap (no floor, no stat drop).</div>
+      <div class="hint">Use <b>{name}</b>, <b>{amount}</b>, and <b>{day}</b> — {amount} is that store's real LY gap (no floor, no stat drop).</div>
     </div>
   </div>
 
@@ -292,7 +292,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
 
 <script>
 window.__DATA__ = [{"mall":"ARUNDEL MILLS STORE","goal":546,"staff":[]},{"mall":"CAROLINA PLACE","goal":54,"staff":[]},{"mall":"CASTLETON SQUARE","goal":411,"staff":[]},{"mall":"GALLERIA FORT LAUDERDALE","goal":926,"staff":[]},{"mall":"GURNEE MILLS","goal":533,"staff":[]},{"mall":"KING OF PRUSSIA STORE","goal":624,"staff":[]},{"mall":"ORLAND SQUARE","goal":1391,"staff":[]},{"mall":"PALISADES STORE","goal":226,"staff":[]},{"mall":"SOMERSET COLLECTIONS","goal":2001,"staff":[]},{"mall":"SPRINGFIELD STORE","goal":195,"staff":[]},{"mall":"TOWSON SQUARE STORE","goal":509,"staff":[]},{"mall":"TREASURE COAST","goal":219,"staff":[]},{"mall":"UTC","goal":0,"staff":[]},{"mall":"WALDEN GALLERIA","goal":515,"staff":[]},{"mall":"WOODFIELD STORE","goal":1105,"staff":[]}];
-window.__TEMPLATES__ = {"monthu":{"floor":400,"msg":"Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?"},"frisun":{"floor":700,"msg":"Hey {name}! 🎉 Happy Friday! Let's keep that energy up today😍 We only need ${amount} to beat LY — very doable with a couple solid bundles! Text me the code word for today's morning message so I know you're locked in, and what sales goal do you write to hit bonus tonight?"},"sat":{"floor":900,"msg":"Hey {name}! 🥳 It's Sales Saturday — our biggest day of the week, let's make it count! We only need ${amount} to beat LY. Focus on sales only today! Text me the code word for today's morning message so I know you're ready, and what sales goal do you write to hit bonus tonight?"}};
+window.__TEMPLATES__ = {"monthu":{"floor":400,"msg":"Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?"},"frisun":{"floor":700,"msg":"Hey {name}! 🎉 Happy {day}! Let's keep that energy up today😍 We only need ${amount} to beat LY — very doable with a couple solid bundles! Text me the code word for today's morning message so I know you're locked in, and what sales goal do you write to hit bonus tonight?"},"sat":{"floor":900,"msg":"Hey {name}! 🥳 It's Sales Saturday — our biggest day of the week, let's make it count! We only need ${amount} to beat LY. Focus on sales only today! Text me the code word for today's morning message so I know you're ready, and what sales goal do you write to hit bonus tonight?"}};
 window.__LOWTEMPLATE__ = {"threshold":100,"msg":"Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?"};
 const data = window.__DATA__;
 // ---- stores discovered from a Shopify paste that aren't in the Staff Contact sheet yet ----
@@ -727,11 +727,11 @@ document.getElementById('go').onclick=()=>{
     if (mode==='lowsales'){
       const info = lowSalesInfo(s.mall);
       amount = info.gap.toLocaleString();
-      body = lowTemplate.msg.replace(/{name}/g,first).replace(/{amount}/g,amount);
+      body = lowTemplate.msg.replace(/{name}/g,first).replace(/{amount}/g,amount).replace(/{day}/g,DAY_FULL[todayIdx]);
     } else {
       const info = goalInfo(s.mall);
       amount = info.goal.toLocaleString();
-      body = templates[selectedBucket].msg.replace(/{name}/g,first).replace(/{amount}/g,amount) + '\n\n' + statDropBlock(info);
+      body = templates[selectedBucket].msg.replace(/{name}/g,first).replace(/{amount}/g,amount).replace(/{day}/g,DAY_FULL[todayIdx]) + '\n\n' + statDropBlock(info);
     }
     const href='sms:'+fmtPhone(p.phone)+'&body='+encodeURIComponent(body);
     const row=document.createElement('div'); row.className='qrow';
