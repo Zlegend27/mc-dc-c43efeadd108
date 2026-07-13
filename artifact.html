@@ -16,7 +16,7 @@
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;font:16px/1.42 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;background:var(--paper);color:var(--ink);padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+body{margin:0;font:16px/1.42 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;background:var(--paper);color:var(--ink);padding-bottom:140px}
 @media (prefers-reduced-motion:no-preference){ .cbx,.goalpill,.person,.qrow,button,.seg button{transition:background-color .16s ease, color .16s ease, transform .12s ease, border-color .16s ease} }
 button{font-family:inherit}
 ::selection{background:var(--accent-soft)}
@@ -70,14 +70,15 @@ header.app{position:sticky;top:0;z-index:5;background:var(--paper);padding:max(1
 .cbx{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);flex:0 0 auto;display:grid;place-items:center;font-size:14px;color:transparent;font-weight:800}
 .person.sel .cbx{background:var(--ok);border-color:var(--ok);color:#fff}
 
-/* ---------- bottom action bar (Send page) ---------- */
-.bar{position:fixed;left:0;right:0;bottom:58px;background:var(--card);border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:10px;align-items:center;z-index:6;box-shadow:0 -4px 14px rgba(0,0,0,.05)}
+/* ---------- fixed bottom dock: send bar stacks normally above the tab bar (no magic offsets) ---------- */
+#dock{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;flex-direction:column;background:var(--card)}
+.bar{background:var(--card);border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 -4px 14px rgba(0,0,0,.05)}
 .cnt{font-weight:700;font-size:14px}.cnt small{color:var(--sub);font-weight:600}
 .btn-go{margin-left:auto;background:var(--accent);color:var(--accent-ink);border:none;border-radius:12px;padding:12px 20px;font:inherit;font-weight:800;font-size:14.5px}
 .btn-go:disabled{opacity:.35}
 
 /* ---------- bottom tab bar ---------- */
-nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:7;display:flex;background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+nav.tabbar{display:flex;background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
 nav.tabbar button{flex:1;background:transparent;border:none;color:var(--sub);font-weight:700;font-size:10.5px;letter-spacing:.2px;padding:6px 4px 4px;display:flex;flex-direction:column;align-items:center;gap:3px}
 nav.tabbar button .ic{font-size:19px;line-height:1}
 nav.tabbar button.on{color:var(--accent)}
@@ -211,15 +212,16 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
 
 </section>
 
-<div class="bar" id="sendBar">
-  <div class="cnt"><span id="n">0</span> <small>selected</small></div>
-  <button class="btn-go" id="go" disabled>Start texting →</button>
+<div id="dock">
+  <div class="bar" id="sendBar">
+    <div class="cnt"><span id="n">0</span> <small>selected</small></div>
+    <button class="btn-go" id="go" disabled>Start texting →</button>
+  </div>
+  <nav class="tabbar">
+    <button class="on" data-page="pageSend"><span class="ic">💬</span>Send</button>
+    <button data-page="pageSetup"><span class="ic">⚙️</span>Setup</button>
+  </nav>
 </div>
-
-<nav class="tabbar">
-  <button class="on" data-page="pageSend"><span class="ic">💬</span>Send</button>
-  <button data-page="pageSetup"><span class="ic">⚙️</span>Setup</button>
-</nav>
 
 <dialog id="dlg">
   <div class="dlg-h"><b>Send in order</b><span>Tap Text, hit send in Messages, come back for the next one</span></div>
@@ -237,7 +239,13 @@ const EXTRA_KEY='districtTexter.extraStores.v1';
 function loadExtraMalls(){ try{ return JSON.parse(localStorage.getItem(EXTRA_KEY))||[]; }catch{ return []; } }
 function saveExtraMalls(list){ localStorage.setItem(EXTRA_KEY, JSON.stringify(list)); }
 let extraMalls = loadExtraMalls();
+// Stores that show up in Shopify reports but aren't part of this district — always skip them.
+const IGNORED_MALLS = ['COUNTRYSIDE'];
+function isIgnoredMall(name){ const U=(name||'').toUpperCase(); return IGNORED_MALLS.some(tok=>U.includes(tok)); }
+if (extraMalls.some(isIgnoredMall)) { extraMalls = extraMalls.filter(m=>!isIgnoredMall(m)); saveExtraMalls(extraMalls); }
 for (const m of extraMalls) { if (!data.some(s=>s.mall===m)) data.push({mall:m, staff:[]}); }
+// Clean up any ignored-mall data left over from before this fix shipped.
+for (let i=data.length-1;i>=0;i--) if (isIgnoredMall(data[i].mall)) data.splice(i,1);
 const list = document.getElementById('list');
 const sel = new Set();
 const DAY_KEYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -329,17 +337,23 @@ function parseCSVText(text){
   return rows;
 }
 function detectColumns(headerRow){
-  // First matching column wins per field — Shopify's export has been seen with a duplicate,
-  // mislabeled 4th column (same "previous_year_match_day_of_week" text as the real LY column,
-  // but it actually holds the %diff). Letting a later match overwrite an earlier one silently
-  // pulled that %diff number in as "LY total sales" — first-match-wins fixes that.
+  // Shopify's export repeats each dated column (LY total sales, LY avg order) a second time
+  // under an identical header (holding %diff instead) — first match per field wins so that
+  // duplicate never overwrites the real value. A column counts as "dated"/LY if its header has
+  // an explicit date stamp like "(20250713T000000)", or the older "previous_year..." phrasing.
   const idx = { loc:-1, today:-1, ly:-1, aov:-1 };
   headerRow.forEach((cell,i)=>{
-    const c=(cell||'').trim().toLowerCase();
+    const raw=(cell||'').trim();
+    const c=raw.toLowerCase();
     if (idx.loc===-1 && /pos location|store|mall/.test(c) && i===0){ idx.loc=i; return; }
-    if (idx.aov===-1 && /average order|aov/.test(c)){ idx.aov=i; return; }
-    if (idx.ly===-1 && /previous_year|previous year|last year/.test(c)){ idx.ly=i; return; }
-    if (idx.today===-1 && /total sales/.test(c)){ idx.today=i; return; }
+    const dated = /\(\d{8}t\d{6}\)/i.test(raw) || /previous_year|previous year|last year/.test(c);
+    const isAov = /average order|aov/.test(c);
+    const isSales = /total sales/.test(c);
+    if (dated){
+      if (isAov && idx.aov===-1){ idx.aov=i; return; }
+      if (isSales && idx.ly===-1){ idx.ly=i; return; }
+    } else if (isSales && idx.today===-1){ idx.today=i; return; }
+    // undated "average order" = today's AOV — not used anywhere yet, so intentionally skipped.
   });
   if (idx.loc===-1) idx.loc=0;
   if (idx.today===-1) idx.today=1;
@@ -356,10 +370,11 @@ document.getElementById('applyPaste').addEventListener('click', ()=>{
     idx = detectColumns(rows[0]);
     dataRows = rows.slice(1);
   }
-  let matched=0, added=[], gotAov=false;
+  let matched=0, added=[], gotAov=false, ignored=0;
   for (const r of dataRows) {
     const loc = (r[idx.loc]||'').trim();
     if (!loc) continue;
+    if (isIgnoredMall(loc)) { ignored++; continue; }
     let mall = canonMall(loc);
     if (!mall) {
       // Store not in the Staff Contact sheet yet (e.g. a newly opened mall) — still capture
@@ -472,7 +487,14 @@ document.querySelectorAll('nav.tabbar button').forEach(b=>b.addEventListener('cl
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById(b.dataset.page).classList.add('on');
   document.getElementById('sendBar').style.display = b.dataset.page==='pageSend' ? 'flex' : 'none';
+  syncDockPadding();
 }));
+
+// ---- keep body padding matched to the dock's real height so nothing hides behind it ----
+const dockEl = document.getElementById('dock');
+function syncDockPadding(){ document.body.style.paddingBottom = (dockEl.offsetHeight + 14) + 'px'; }
+window.addEventListener('resize', syncDockPadding);
+window.addEventListener('orientationchange', syncDockPadding);
 
 // ---- floor summary line under header ----
 function renderFloorLine(){
@@ -558,5 +580,5 @@ document.getElementById('go').onclick=()=>{
 };
 document.getElementById('close').onclick=()=>document.getElementById('dlg').close();
 
-render(); updateCount();
+render(); updateCount(); syncDockPadding();
 </script>
