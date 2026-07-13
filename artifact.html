@@ -22,6 +22,8 @@ button{font-family:inherit}
 ::selection{background:var(--accent-soft)}
 
 /* ---------- top header ---------- */
+#updateBanner{position:sticky;top:0;z-index:8;background:var(--ok);color:#fff;padding:max(10px,env(safe-area-inset-top)) 14px 10px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700}
+#updateBanner button{margin-left:auto;background:rgba(255,255,255,.22);color:#fff;border:none;border-radius:8px;padding:8px 14px;font:inherit;font-weight:800;font-size:12.5px}
 header.app{position:sticky;top:0;z-index:5;background:var(--paper);padding:max(14px,env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:baseline;gap:8px}
 .brand .mark{width:9px;height:9px;border-radius:2px;background:var(--accent);transform:rotate(45deg);flex:0 0 auto}
@@ -104,6 +106,7 @@ textarea.mono{width:100%;min-height:96px;font:12.5px/1.5 ui-monospace,"SF Mono",
 textarea.prose{width:100%;min-height:120px;font:14px/1.5 inherit;border:1px solid var(--line);border-radius:11px;padding:11px;background:var(--paper);color:var(--ink);resize:vertical}
 .rowline{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
 .btn-primary{background:var(--accent);color:var(--accent-ink);border:none;border-radius:10px;padding:10px 16px;font:inherit;font-weight:800;font-size:13.5px}
+.btn-clear{background:var(--chip);color:var(--sub);border:none;border-radius:10px;padding:10px 14px;font:inherit;font-weight:700;font-size:13.5px}
 .status{font-size:12px;color:var(--sub);font-weight:600}
 .status.ok{color:var(--ok)}
 .status.warn{color:var(--warn)}
@@ -190,6 +193,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
       <textarea class="mono" id="pasteBox" placeholder="POS location name,Total sales,Total sales (previous_year_match_day_of_week),Average order (previous_year_match_day_of_week)&#10;Orland Square,321.73,1391.47,62.10&#10;..."></textarea>
       <div class="rowline">
         <button class="btn-primary" id="applyPaste">Apply to <span id="todayLabel"></span></button>
+        <button class="btn-clear" id="clearPaste">Clear</button>
         <span class="status" id="pasteMsg"></span>
       </div>
     </div>
@@ -279,6 +283,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
 </dialog>
 
 <script>
+window.__BUILD__ = "2026-07-13T02:59:39.391Z";
 window.__DATA__ = [{"mall":"ARUNDEL MILLS STORE","goal":546,"staff":[{"name":"JAMIE GRIFFIN","phone":"14435917052"},{"name":"ANGELINA TRAN","phone":"12405596289"},{"name":"ARIELLE MABREY","phone":"16672891642"}]},{"mall":"CAROLINA PLACE","goal":54,"staff":[{"name":"Evelyn \"Evie\" Stewart","phone":"17049898319"},{"name":"Ah'venique Francis","phone":"17047722068"},{"name":"ALYSON AVERETTE","phone":"19843036629"}]},{"mall":"CASTLETON SQUARE","goal":411,"staff":[{"name":"SHARRECE FRYE","phone":"18125815225"},{"name":"Tainesha Lovett","phone":"17737339819"},{"name":"JYLIAN WALKER","phone":"13177192861"}]},{"mall":"GALLERIA FORT LAUDERDALE","goal":926,"staff":[{"name":"MARBELLA MARTINEZ","phone":"19545341237"},{"name":"Kimonie Altidor","phone":"15618840031"},{"name":"MOLLY OATES","phone":"9548509334"},{"name":"Beatrice Piludu","phone":"17868930250"}]},{"mall":"GURNEE MILLS","goal":533,"staff":[{"name":"AURORA  AREVALO","phone":"12244408645"},{"name":"LINDSEY CARREON","phone":"12247629820"},{"name":"GWEN MOORE","phone":"17086031480"}]},{"mall":"KING OF PRUSSIA STORE","goal":624,"staff":[{"name":"DIANA BRAVO","phone":"12157911467"},{"name":"ALAYNE MCPHAIL","phone":"12159770389"},{"name":"DAYONNA THOMAS","phone":"12679167479"}]},{"mall":"ORLAND SQUARE","goal":1391,"staff":[{"name":"ZAID HAMMAD","phone":"17084657040"},{"name":"MARLY RAMIREZ","phone":"17085004426"},{"name":"DANA THAHER","phone":"17088566583"}]},{"mall":"PALISADES STORE","goal":226,"staff":[{"name":"DANIELLE DELATOUR","phone":"18454134386"},{"name":"Briana Giovinazzo","phone":"18457094015"},{"name":"Sheyli Lemus","phone":"18454059525"},{"name":"Emily Sullivan","phone":"18452701154"}]},{"mall":"SOMERSET COLLECTIONS","goal":2001,"staff":[{"name":"Ariande Quates","phone":"12483467265"},{"name":"Ashley Sussani","phone":"12489855873"},{"name":"Desiree Strickland","phone":"15862784678"}]},{"mall":"SPRINGFIELD STORE","goal":195,"staff":[{"name":"GRACE MCRAE","phone":"17033576756"},{"name":"Lelani Burroughs","phone":"12025829200"}]},{"mall":"TOWSON SQUARE STORE","goal":509,"staff":[{"name":"CADANCE MOYANO","phone":"14436767882"},{"name":"Skiya Godwin","phone":"19102803915"},{"name":"Dominic Link","phone":"16673048193"}]},{"mall":"TREASURE COAST","goal":219,"staff":[{"name":"SHAR WEISENBERG","phone":"14357494025"},{"name":"STEPHANIE MARQUES","phone":"16034043311"},{"name":"ANGELINA ANGEL","phone":"17728018513"},{"name":"HANTZ ETIENNE","phone":"17863821658"},{"name":"LINDSEY JEAN-LEWIS","phone":"15613792735"}]},{"mall":"UTC","goal":0,"staff":[{"name":"Skye Samuel","phone":"19419613178"},{"name":"Sharon Wortman","phone":"19419621888"},{"name":"Briana Damas-Mendez","phone":"19292313400"},{"name":"Andrea Morales","phone":"17604097923"}]},{"mall":"WALDEN GALLERIA","goal":515,"staff":[{"name":"NVIN MOHAMMED","phone":"17162999928"},{"name":"Mike Kowalski","phone":"17169891754"},{"name":"Hajer Yahya","phone":"17164957793"}]},{"mall":"WOODFIELD STORE","goal":1105,"staff":[{"name":"JASMIN MUNOZ","phone":"16304400828"},{"name":"Marcella Krukowski","phone":"13126132669"},{"name":"VICTORIA GONZALEZ","phone":"12246059074"}]}];
 window.__TEMPLATES__ = {"monthu":{"floor":400,"msg":"Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?"},"frisun":{"floor":700,"msg":"Hey {name}! 🎉 Happy {day}! Let's keep that energy up today😍 We only need ${amount} to beat LY — very doable with a couple solid bundles! Text me the code word for today's morning message so I know you're locked in, and what sales goal do you write to hit bonus tonight?"},"sat":{"floor":900,"msg":"Hey {name}! 🥳 It's Sales Saturday — our biggest day of the week, let's make it count! We only need ${amount} to beat LY. Focus on sales only today! Text me the code word for today's morning message so I know you're ready, and what sales goal do you write to hit bonus tonight?"}};
 window.__LOWTEMPLATE__ = {"threshold":100,"msg":"Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?"};
@@ -422,6 +427,11 @@ function detectColumns(headerRow){
   if (idx.ly===-1) idx.ly=2;
   return idx;
 }
+document.getElementById('clearPaste').addEventListener('click', ()=>{
+  document.getElementById('pasteBox').value='';
+  const msg = document.getElementById('pasteMsg');
+  msg.textContent=''; msg.className='status';
+});
 document.getElementById('applyPaste').addEventListener('click', ()=>{
   const raw = document.getElementById('pasteBox').value.trim();
   const msg = document.getElementById('pasteMsg');
@@ -733,4 +743,24 @@ document.getElementById('go').onclick=()=>{
 document.getElementById('close').onclick=()=>document.getElementById('dlg').close();
 
 render(); updateCount(); syncDockPadding();
+
+// ---- auto-update check: catches everyone up without any manual cache-clearing ----
+async function checkForUpdate(){
+  try {
+    const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
+    const html = await res.text();
+    const m = html.match(/window\.__BUILD__\s*=\s*"([^"]+)"/);
+    if (m && m[1] && m[1] !== window.__BUILD__ && !document.getElementById('updateBanner')) {
+      const b = document.createElement('div');
+      b.id = 'updateBanner';
+      b.innerHTML = '🔄 A newer version is ready<button id="updateNowBtn">Update now</button>';
+      document.body.prepend(b);
+      document.getElementById('updateNowBtn').addEventListener('click', ()=>{
+        location.href = location.pathname + '?v=' + m[1];
+      });
+    }
+  } catch(e) {}
+}
+checkForUpdate();
+document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='visible') checkForUpdate(); });
 </script>
