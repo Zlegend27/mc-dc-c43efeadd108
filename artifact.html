@@ -115,6 +115,18 @@ table.ly input{width:100%;max-width:58px;font:12px/1 inherit;font-variant-numeri
 .hint{font-size:11.5px;color:var(--sub);line-height:1.5;margin-top:8px}
 .hint b{color:var(--ink)}
 
+/* ---------- manage staff ---------- */
+.storeSelect{width:100%;font:15px/1.2 inherit;font-weight:700;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--paper);color:var(--ink);margin-bottom:10px;-webkit-appearance:none;appearance:none}
+.staffrow{display:flex;gap:8px;align-items:center;padding:7px 0}
+.staffrow input{flex:1;min-width:0;font:14px/1.2 inherit;border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:var(--paper);color:var(--ink)}
+.staffrow input.nm-in{flex:1.2}
+.staffdel{flex:0 0 auto;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--warn);font-weight:800;font-size:16px}
+.staffempty{font-size:12.5px;color:var(--sub);padding:6px 0}
+.addrow{display:flex;gap:8px;align-items:center;padding:10px 0 2px;border-top:1px dashed var(--line);margin-top:6px}
+.addstorerow{display:flex;gap:8px;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.addstorerow input{flex:1;font:14px/1.2 inherit;border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:var(--paper);color:var(--ink)}
+.btn-add{flex:0 0 auto;background:var(--ok);color:#fff;border:none;border-radius:9px;padding:9px 14px;font:inherit;font-weight:800;font-size:13px}
+
 /* ---------- send dialog ---------- */
 dialog{border:none;border-radius:20px;padding:0;max-width:440px;width:92%;background:var(--card);color:var(--ink)}
 dialog::backdrop{background:rgba(10,8,6,.55)}
@@ -210,6 +222,27 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
     </div>
   </div>
 
+  <div class="card">
+    <div class="card-h">
+      <div class="eyebrow">Step 4 · As needed</div>
+      <h3>👥 Manage staff</h3>
+      <p>Edit a phone number, add a new hire, or add a brand-new store — without re-pasting the whole contact sheet.</p>
+    </div>
+    <div class="card-b">
+      <select class="storeSelect" id="staffStoreSelect"></select>
+      <div id="staffList"></div>
+      <div class="addrow">
+        <input type="text" id="newPersonName" placeholder="New person's name">
+        <input type="tel" id="newPersonPhone" placeholder="Phone" inputmode="tel">
+        <button class="btn-add" id="addPersonBtn">Add</button>
+      </div>
+      <div class="addstorerow">
+        <input type="text" id="newStoreName" placeholder="New store name">
+        <button class="btn-add" id="addStoreBtn">+ Add store</button>
+      </div>
+    </div>
+  </div>
+
 </section>
 
 <div id="dock">
@@ -246,6 +279,19 @@ if (extraMalls.some(isIgnoredMall)) { extraMalls = extraMalls.filter(m=>!isIgnor
 for (const m of extraMalls) { if (!data.some(s=>s.mall===m)) data.push({mall:m, staff:[]}); }
 // Clean up any ignored-mall data left over from before this fix shipped.
 for (let i=data.length-1;i>=0;i--) if (isIgnoredMall(data[i].mall)) data.splice(i,1);
+
+// ---- manual staff edits (persisted; a full staff-array replacement per store) ----
+const STAFF_KEY='districtTexter.staffOverrides.v1';
+function loadStaffOverrides(){ try{ return JSON.parse(localStorage.getItem(STAFF_KEY))||{}; }catch{ return {}; } }
+function saveStaffOverrides(o){ localStorage.setItem(STAFF_KEY, JSON.stringify(o)); }
+let staffOverrides = loadStaffOverrides();
+for (const mall in staffOverrides) {
+  if (isIgnoredMall(mall)) continue;
+  let store = data.find(s=>s.mall===mall);
+  if (!store) { store = {mall, staff:[]}; data.push(store); }
+  store.staff = staffOverrides[mall];
+}
+
 const list = document.getElementById('list');
 const sel = new Set();
 const DAY_KEYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -547,6 +593,85 @@ document.getElementById('lowPreset5pm').addEventListener('click', ()=>{
   lowTemplate.threshold = 300; loadLowEditor(); saveLowTemplate(); renderFloorLine(); if(mode==='lowsales') render();
 });
 loadLowEditor();
+
+// ---- manage staff (Setup > Step 4) ----
+const staffStoreSelect = document.getElementById('staffStoreSelect');
+const staffListEl = document.getElementById('staffList');
+function sortedMalls(){ return data.map(s=>s.mall).sort(); }
+function currentStaffStore(){ return data.find(s=>s.mall===decodeURIComponent(staffStoreSelect.value||'')) || data[0]; }
+function renderStoreSelect(){
+  const prev = staffStoreSelect.value;
+  staffStoreSelect.innerHTML = sortedMalls().map(m=>'<option value="'+encodeURIComponent(m)+'">'+m+'</option>').join('');
+  const opts=[...staffStoreSelect.options].map(o=>o.value);
+  staffStoreSelect.value = opts.includes(prev) ? prev : (opts[0]||'');
+}
+function saveStaffForMall(mall, staffArr){
+  staffOverrides[mall] = staffArr;
+  saveStaffOverrides(staffOverrides);
+  const store = data.find(s=>s.mall===mall);
+  if (store) store.staff = staffArr;
+  render();
+}
+function renderStaffList(){
+  const store = currentStaffStore();
+  staffListEl.innerHTML='';
+  if (!store){ return; }
+  if (!store.staff.length){ staffListEl.innerHTML='<div class="staffempty">No staff on file for this store yet — add one below.</div>'; }
+  store.staff.forEach((p,i)=>{
+    const row=document.createElement('div'); row.className='staffrow';
+    row.innerHTML='<input class="nm-in" type="text" value="'+(p.name||'').replace(/"/g,'&quot;')+'">'+
+      '<input type="tel" inputmode="tel" value="'+(p.phone||'')+'">'+
+      '<button class="staffdel" title="Remove">×</button>';
+    const [nmIn, phIn] = row.querySelectorAll('input');
+    const delBtn = row.querySelector('.staffdel');
+    function commit(){
+      const arr = store.staff.slice();
+      arr[i] = { name: nmIn.value.trim(), phone: phIn.value.replace(/\D/g,'') };
+      saveStaffForMall(store.mall, arr);
+    }
+    nmIn.addEventListener('change', commit);
+    phIn.addEventListener('change', commit);
+    delBtn.addEventListener('click', ()=>{
+      const arr = store.staff.slice(); arr.splice(i,1);
+      saveStaffForMall(store.mall, arr);
+      renderStaffList();
+    });
+    staffListEl.appendChild(row);
+  });
+}
+staffStoreSelect.addEventListener('change', renderStaffList);
+document.getElementById('addPersonBtn').addEventListener('click', ()=>{
+  const nameEl=document.getElementById('newPersonName'), phoneEl=document.getElementById('newPersonPhone');
+  const name=nameEl.value.trim(), phone=phoneEl.value.replace(/\D/g,'');
+  if (!name) { nameEl.focus(); return; }
+  const store = currentStaffStore();
+  if (!store) return;
+  const arr = store.staff.slice();
+  arr.push({name, phone});
+  saveStaffForMall(store.mall, arr);
+  nameEl.value=''; phoneEl.value='';
+  renderStaffList();
+});
+document.getElementById('addStoreBtn').addEventListener('click', ()=>{
+  const input = document.getElementById('newStoreName');
+  const raw = input.value.trim();
+  if (!raw) { input.focus(); return; }
+  if (isIgnoredMall(raw)) { input.value=''; return; }
+  const mall = raw.toUpperCase().replace(/\s+/g,' ').trim();
+  if (!data.some(s=>s.mall===mall)) {
+    data.push({mall, staff:[]});
+    if (!extraMalls.includes(mall)) { extraMalls.push(mall); saveExtraMalls(extraMalls); }
+    if (!lyStore[mall]) { lyStore[mall]=DAY_KEYS.map(()=>0); saveLy(lyStore); }
+    if (!lyAov[mall]) { lyAov[mall]=DAY_KEYS.map(()=>0); saveAov(lyAov); }
+  }
+  input.value='';
+  renderStoreSelect();
+  staffStoreSelect.value = encodeURIComponent(mall);
+  renderStaffList();
+  render();
+});
+renderStoreSelect();
+renderStaffList();
 
 // ---- send queue ----
 function statDropBlock(info){
