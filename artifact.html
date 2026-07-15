@@ -128,7 +128,9 @@ table.ly input{width:100%;max-width:58px;font:12px/1 inherit;font-variant-numeri
 .hint b{color:var(--ink)}
 
 /* ---------- manage staff ---------- */
-.storeSelect{width:100%;font:15px/1.2 inherit;font-weight:700;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--paper);color:var(--ink);margin-bottom:10px;-webkit-appearance:none;appearance:none}
+.storerow{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.storeSelect{flex:1;width:100%;font:15px/1.2 inherit;font-weight:700;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--paper);color:var(--ink);-webkit-appearance:none;appearance:none}
+.btn-removestore{flex:0 0 auto;background:var(--warn-soft);color:var(--warn);border:none;border-radius:10px;padding:10px 12px;font:inherit;font-weight:700;font-size:12.5px;white-space:nowrap}
 .staffrow{display:flex;gap:8px;align-items:center;padding:7px 0}
 .staffrow input{flex:1;min-width:0;font:14px/1.2 inherit;border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:var(--paper);color:var(--ink)}
 .staffrow input.nm-in{flex:1.2}
@@ -242,14 +244,21 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
     </div>
   </div>
 
+
+</section>
+
+<section class="page" id="pageContacts">
   <div class="card">
     <div class="card-h">
-      <div class="eyebrow">Step 4 · As needed</div>
-      <h3>👥 Manage staff</h3>
-      <p>Edit a phone number, add a new hire, or add a brand-new store — without re-pasting the whole contact sheet.</p>
+      <div class="eyebrow">District Staff Contacts</div>
+      <h3>👥 Manage stores &amp; staff</h3>
+      <p>Edit a phone number, add a new hire, remove someone who's left, or add/remove a whole store — right here, no re-pasting a whole contact sheet.</p>
     </div>
     <div class="card-b">
-      <select class="storeSelect" id="staffStoreSelect"></select>
+      <div class="storerow">
+        <select class="storeSelect" id="staffStoreSelect"></select>
+        <button class="btn-removestore" id="removeStoreBtn" title="Remove this store">Remove store</button>
+      </div>
       <div id="staffList"></div>
       <div class="addrow">
         <input type="text" id="newPersonName" placeholder="New person's name">
@@ -262,7 +271,6 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
       </div>
     </div>
   </div>
-
 </section>
 
 <div id="dock">
@@ -272,6 +280,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
   </div>
   <nav class="tabbar">
     <button class="on" data-page="pageSend"><span class="ic">💬</span>Send</button>
+    <button data-page="pageContacts"><span class="ic">👥</span>Contacts</button>
     <button data-page="pageSetup"><span class="ic">⚙️</span>Setup</button>
   </nav>
 </div>
@@ -283,8 +292,8 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
 </dialog>
 
 <script>
-window.__BUILD__ = "2026-07-13T02:59:39.391Z";
-window.__DATA__ = [{"mall":"ARUNDEL MILLS STORE","goal":546,"staff":[{"name":"JAMIE GRIFFIN","phone":"14435917052"},{"name":"ANGELINA TRAN","phone":"12405596289"},{"name":"ARIELLE MABREY","phone":"16672891642"}]},{"mall":"CAROLINA PLACE","goal":54,"staff":[{"name":"Evelyn \"Evie\" Stewart","phone":"17049898319"},{"name":"Ah'venique Francis","phone":"17047722068"},{"name":"ALYSON AVERETTE","phone":"19843036629"}]},{"mall":"CASTLETON SQUARE","goal":411,"staff":[{"name":"SHARRECE FRYE","phone":"18125815225"},{"name":"Tainesha Lovett","phone":"17737339819"},{"name":"JYLIAN WALKER","phone":"13177192861"}]},{"mall":"GALLERIA FORT LAUDERDALE","goal":926,"staff":[{"name":"MARBELLA MARTINEZ","phone":"19545341237"},{"name":"Kimonie Altidor","phone":"15618840031"},{"name":"MOLLY OATES","phone":"9548509334"},{"name":"Beatrice Piludu","phone":"17868930250"}]},{"mall":"GURNEE MILLS","goal":533,"staff":[{"name":"AURORA  AREVALO","phone":"12244408645"},{"name":"LINDSEY CARREON","phone":"12247629820"},{"name":"GWEN MOORE","phone":"17086031480"}]},{"mall":"KING OF PRUSSIA STORE","goal":624,"staff":[{"name":"DIANA BRAVO","phone":"12157911467"},{"name":"ALAYNE MCPHAIL","phone":"12159770389"},{"name":"DAYONNA THOMAS","phone":"12679167479"}]},{"mall":"ORLAND SQUARE","goal":1391,"staff":[{"name":"ZAID HAMMAD","phone":"17084657040"},{"name":"MARLY RAMIREZ","phone":"17085004426"},{"name":"DANA THAHER","phone":"17088566583"}]},{"mall":"PALISADES STORE","goal":226,"staff":[{"name":"DANIELLE DELATOUR","phone":"18454134386"},{"name":"Briana Giovinazzo","phone":"18457094015"},{"name":"Sheyli Lemus","phone":"18454059525"},{"name":"Emily Sullivan","phone":"18452701154"}]},{"mall":"SOMERSET COLLECTIONS","goal":2001,"staff":[{"name":"Ariande Quates","phone":"12483467265"},{"name":"Ashley Sussani","phone":"12489855873"},{"name":"Desiree Strickland","phone":"15862784678"}]},{"mall":"SPRINGFIELD STORE","goal":195,"staff":[{"name":"GRACE MCRAE","phone":"17033576756"},{"name":"Lelani Burroughs","phone":"12025829200"}]},{"mall":"TOWSON SQUARE STORE","goal":509,"staff":[{"name":"CADANCE MOYANO","phone":"14436767882"},{"name":"Skiya Godwin","phone":"19102803915"},{"name":"Dominic Link","phone":"16673048193"}]},{"mall":"TREASURE COAST","goal":219,"staff":[{"name":"SHAR WEISENBERG","phone":"14357494025"},{"name":"STEPHANIE MARQUES","phone":"16034043311"},{"name":"ANGELINA ANGEL","phone":"17728018513"},{"name":"HANTZ ETIENNE","phone":"17863821658"},{"name":"LINDSEY JEAN-LEWIS","phone":"15613792735"}]},{"mall":"UTC","goal":0,"staff":[{"name":"Skye Samuel","phone":"19419613178"},{"name":"Sharon Wortman","phone":"19419621888"},{"name":"Briana Damas-Mendez","phone":"19292313400"},{"name":"Andrea Morales","phone":"17604097923"}]},{"mall":"WALDEN GALLERIA","goal":515,"staff":[{"name":"NVIN MOHAMMED","phone":"17162999928"},{"name":"Mike Kowalski","phone":"17169891754"},{"name":"Hajer Yahya","phone":"17164957793"}]},{"mall":"WOODFIELD STORE","goal":1105,"staff":[{"name":"JASMIN MUNOZ","phone":"16304400828"},{"name":"Marcella Krukowski","phone":"13126132669"},{"name":"VICTORIA GONZALEZ","phone":"12246059074"}]}];
+window.__BUILD__ = "2026-07-15T14:26:02.754Z";
+window.__DATA__ = [{"mall":"ARUNDEL MILLS STORE","goal":546,"staff":[{"name":"JAMIE GRIFFIN","phone":"14435917052"},{"name":"Kaiya Jackson","phone":"14432026437"},{"name":"ARIELLE MABREY","phone":"16672891642"},{"name":"Ebun Omotayo- Benson","phone":"12402640499"}]},{"mall":"CAROLINA PLACE","goal":54,"staff":[{"name":"Evelyn \"Evie\" Stewart","phone":"17049898319"},{"name":"Ah'venique Francis","phone":"17047722068"},{"name":"ALYSON AVERETTE","phone":"19843036629"}]},{"mall":"CASTLETON SQUARE","goal":411,"staff":[{"name":"SHARRECE FRYE","phone":"18125815225"},{"name":"Tainesha Lovett","phone":"17737339819"},{"name":"JYLIAN WALKER","phone":"14632689089"}]},{"mall":"GALLERIA FORT LAUDERDALE","goal":926,"staff":[{"name":"MARBELLA MARTINEZ","phone":"19545341237"},{"name":"Michelle Richardson","phone":"15616058156"},{"name":"MOLLY OATES","phone":"9548509334"},{"name":"Beatrice Piludu","phone":"17868930250"}]},{"mall":"GURNEE MILLS","goal":533,"staff":[{"name":"AURORA  AREVALO","phone":"12244408645"},{"name":"LINDSEY CARREON","phone":"12247629820"},{"name":"GWEN MOORE","phone":"17086031480"}]},{"mall":"KING OF PRUSSIA STORE","goal":624,"staff":[{"name":"DIANA BRAVO","phone":"12157911467"},{"name":"ALAYNE MCPHAIL","phone":"12159770389"},{"name":"DAYONNA THOMAS","phone":"12679167479"}]},{"mall":"ORLAND SQUARE","goal":1391,"staff":[{"name":"ZAID HAMMAD","phone":"17084657040"},{"name":"MARLY RAMIREZ","phone":"17085004426"},{"name":"DANA THAHER","phone":"17088566583"},{"name":"Corinne Veles","phone":"17087380644"}]},{"mall":"PALISADES STORE","goal":226,"staff":[{"name":"Briana Giovinazzo","phone":"18457094015"},{"name":"Sheyli Lemus","phone":"18454059525"},{"name":"Pricsilla Diaz","phone":"19144341822"}]},{"mall":"SOMERSET COLLECTIONS","goal":2001,"staff":[{"name":"Ariande Quates","phone":"12483467265"},{"name":"Ashley Sussani","phone":"12489855873"},{"name":"Desiree Strickland","phone":"15862784678"}]},{"mall":"TOWSON SQUARE STORE","goal":509,"staff":[{"name":"CADANCE MOYANO","phone":"14436767882"},{"name":"Skiya Godwin","phone":"19102803915"},{"name":"Dominic Link","phone":"16673048193"}]},{"mall":"TREASURE COAST","goal":219,"staff":[{"name":"SHAR WEISENBERG","phone":"14357494025"},{"name":"STEPHANIE MARQUES","phone":"16034043311"},{"name":"LINDSEY JEAN-LEWIS","phone":"15613792735"},{"name":"HANTZ ETIENNE","phone":"17863821658"}]},{"mall":"UTC","goal":0,"staff":[{"name":"Skye Samuel","phone":"19419613178"},{"name":"Sharon Wortman","phone":"19419621888"},{"name":"Briana Damas-Mendez","phone":"19292313400"},{"name":"Andrea Morales","phone":"17604097923"}]},{"mall":"WALDEN GALLERIA","goal":515,"staff":[{"name":"Amani Watson","phone":"17164655019"},{"name":"Lalia Mostiller","phone":"17168301222"},{"name":"Hajer Yahya","phone":"17164957793"}]},{"mall":"WOODFIELD STORE","goal":1105,"staff":[{"name":"JASMIN MUNOZ","phone":"16304400828"},{"name":"Marcella Krukowski","phone":"13126132669"},{"name":"VICTORIA GONZALEZ","phone":"12246059074"},{"name":"Elena Bogan","phone":"12244282815"}]}];
 window.__TEMPLATES__ = {"monthu":{"floor":400,"msg":"Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?"},"frisun":{"floor":700,"msg":"Hey {name}! 🎉 Happy {day}! Let's keep that energy up today😍 We only need ${amount} to beat LY — very doable with a couple solid bundles! Text me the code word for today's morning message so I know you're locked in, and what sales goal do you write to hit bonus tonight?"},"sat":{"floor":900,"msg":"Hey {name}! 🥳 It's Sales Saturday — our biggest day of the week, let's make it count! We only need ${amount} to beat LY. Focus on sales only today! Text me the code word for today's morning message so I know you're ready, and what sales goal do you write to hit bonus tonight?"}};
 window.__LOWTEMPLATE__ = {"threshold":100,"msg":"Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?"};
 const data = window.__DATA__;
@@ -300,6 +309,13 @@ if (extraMalls.some(isIgnoredMall)) { extraMalls = extraMalls.filter(m=>!isIgnor
 for (const m of extraMalls) { if (!data.some(s=>s.mall===m)) data.push({mall:m, staff:[]}); }
 // Clean up any ignored-mall data left over from before this fix shipped.
 for (let i=data.length-1;i>=0;i--) if (isIgnoredMall(data[i].mall)) data.splice(i,1);
+
+// ---- stores the user has deliberately removed (persists across reloads and future re-builds) ----
+const REMOVED_KEY='districtTexter.removedStores.v1';
+function loadRemovedMalls(){ try{ return JSON.parse(localStorage.getItem(REMOVED_KEY))||[]; }catch{ return []; } }
+function saveRemovedMalls(list){ localStorage.setItem(REMOVED_KEY, JSON.stringify(list)); }
+let removedMalls = loadRemovedMalls();
+for (let i=data.length-1;i>=0;i--) if (removedMalls.includes(data[i].mall)) data.splice(i,1);
 
 // ---- manual staff edits (persisted; a full staff-array replacement per store) ----
 const STAFF_KEY='districtTexter.staffOverrides.v1';
@@ -447,6 +463,7 @@ document.getElementById('applyPaste').addEventListener('click', ()=>{
     const loc = (r[idx.loc]||'').trim();
     if (!loc) continue;
     if (isIgnoredMall(loc)) { ignored++; continue; }
+    if (removedMalls.includes(loc.toUpperCase().replace(/\s+/g,' ').trim()) && !canonMall(loc)) { ignored++; continue; }
     let mall = canonMall(loc);
     if (!mall) {
       // Store not in the Staff Contact sheet yet (e.g. a newly opened mall) — still capture
@@ -695,6 +712,7 @@ document.getElementById('addStoreBtn').addEventListener('click', ()=>{
   if (!raw) { input.focus(); return; }
   if (isIgnoredMall(raw)) { input.value=''; return; }
   const mall = raw.toUpperCase().replace(/\s+/g,' ').trim();
+  if (removedMalls.includes(mall)) { removedMalls = removedMalls.filter(m=>m!==mall); saveRemovedMalls(removedMalls); }
   if (!data.some(s=>s.mall===mall)) {
     data.push({mall, staff:[]});
     if (!extraMalls.includes(mall)) { extraMalls.push(mall); saveExtraMalls(extraMalls); }
@@ -704,6 +722,24 @@ document.getElementById('addStoreBtn').addEventListener('click', ()=>{
   input.value='';
   renderStoreSelect();
   staffStoreSelect.value = encodeURIComponent(mall);
+  renderStaffList();
+  render();
+});
+document.getElementById('removeStoreBtn').addEventListener('click', ()=>{
+  const store = currentStaffStore();
+  if (!store) return;
+  const staffCount = store.staff.length;
+  const warn = staffCount ? ' It has '+staffCount+' staff member'+(staffCount===1?'':'s')+' on file — they\'ll be removed too.' : '';
+  if (!confirm('Remove '+store.mall+' from the district?'+warn)) return;
+  const mall = store.mall;
+  data.splice(data.indexOf(store), 1);
+  if (!removedMalls.includes(mall)) { removedMalls.push(mall); saveRemovedMalls(removedMalls); }
+  extraMalls = extraMalls.filter(m=>m!==mall); saveExtraMalls(extraMalls);
+  delete lyStore[mall]; saveLy(lyStore);
+  delete lyAov[mall]; saveAov(lyAov);
+  delete todaySales[mall]; saveToday(todaySales);
+  delete staffOverrides[mall]; saveStaffOverrides(staffOverrides);
+  renderStoreSelect();
   renderStaffList();
   render();
 });
