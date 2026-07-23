@@ -17,9 +17,9 @@
 
 <style>
 :root{
-  --paper:#f5f2ef; --card:#ffffff; --line:#e7e1db; --ink:#1a1a1d; --sub:#75717c;
+  --paper:#f5f2ef; --card:#ffffff; --line:#e7e1db; --ink:#1a1a1d; --sub:#706c77;
   --accent:#cf2a42; --accent-ink:#ffffff; --accent-soft:#fbe4e6;
-  --ok:#1f9d5a; --ok-soft:#e1f6e8; --warn:#c8790a; --warn-soft:#fdedd3;
+  --ok:#1f9d5a; --ok-soft:#e1f6e8; --warn:#9c5e08; --warn-soft:#fdedd3;
   --chip:#efe9e2; --shadow: 0 1px 2px rgba(20,16,12,.06), 0 6px 16px rgba(20,16,12,.05);
 }
 @media (prefers-color-scheme: dark){
@@ -28,7 +28,7 @@
     --ok:#37c977; --ok-soft:#123322; --warn:#f0a730; --warn-soft:#3a2a10; --chip:#252428;
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 20px rgba(0,0,0,.35); }
 }
-:root[data-theme="light"]{ --paper:#f5f2ef; --card:#ffffff; --line:#e7e1db; --ink:#1a1a1d; --sub:#75717c; --accent:#cf2a42; --accent-ink:#ffffff; --accent-soft:#fbe4e6; --ok:#1f9d5a; --ok-soft:#e1f6e8; --warn:#c8790a; --warn-soft:#fdedd3; --chip:#efe9e2; }
+:root[data-theme="light"]{ --paper:#f5f2ef; --card:#ffffff; --line:#e7e1db; --ink:#1a1a1d; --sub:#706c77; --accent:#cf2a42; --accent-ink:#ffffff; --accent-soft:#fbe4e6; --ok:#1f9d5a; --ok-soft:#e1f6e8; --warn:#9c5e08; --warn-soft:#fdedd3; --chip:#efe9e2; }
 :root[data-theme="dark"]{ --paper:#111113; --card:#1b1b1e; --line:#2b2a2e; --ink:#f2f0ee; --sub:#9b98a1; --accent:#ef4a5f; --accent-ink:#1a0507; --accent-soft:#3a1418; --ok:#37c977; --ok-soft:#123322; --warn:#f0a730; --warn-soft:#3a2a10; --chip:#252428; }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -54,6 +54,11 @@ header.app{position:sticky;top:0;z-index:5;background:var(--paper);padding:max(1
 .floorline{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:var(--sub)}
 .floorline b{color:var(--ink);font-variant-numeric:tabular-nums}
 .floorline .dot{width:4px;height:4px;border-radius:50%;background:var(--sub)}
+.todaySummary{display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;padding:8px 0 0;margin:0;font-size:12px;color:var(--sub);font-weight:600;text-align:left}
+.todaySummary .chev{margin-left:auto;font-size:11px;transition:transform .15s ease}
+.todaySummary[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.todayDetail{display:none}
+.todayDetail.open{display:block}
 .headerbucketseg{display:flex;gap:4px;background:var(--chip);border-radius:9px;padding:3px;margin-top:10px}
 .headerbucketseg button{flex:1;border:none;background:transparent;color:var(--sub);font-weight:700;font-size:11.5px;padding:6px 4px;border-radius:7px}
 .headerbucketseg button.on{background:var(--accent);color:var(--accent-ink)}
@@ -112,6 +117,7 @@ nav.tabbar button .ic{font-size:19px;line-height:1}
 nav.tabbar button.on{color:var(--accent)}
 
 /* ---------- setup page cards ---------- */
+.setupNote{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--ok);background:var(--ok-soft);border-radius:11px;padding:10px 13px;margin-bottom:14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:14px;box-shadow:var(--shadow);overflow:hidden}
 .card-h{padding:14px 16px 4px}
 .card-h .eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
@@ -144,18 +150,86 @@ table.ly input{width:100%;max-width:58px;font:12px/1 inherit;font-variant-numeri
 .hint{font-size:11.5px;color:var(--sub);line-height:1.5;margin-top:8px}
 .hint b{color:var(--ink)}
 
-/* ---------- manage staff ---------- */
-.storerow{display:flex;gap:8px;align-items:center;margin-bottom:10px}
-.storeSelect{flex:1;width:100%;font:15px/1.2 inherit;font-weight:700;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--paper);color:var(--ink);-webkit-appearance:none;appearance:none}
-.btn-removestore{flex:0 0 auto;background:var(--warn-soft);color:var(--warn);border:none;border-radius:10px;padding:10px 12px;font:inherit;font-weight:700;font-size:12.5px;white-space:nowrap}
-.staffrow{display:flex;gap:8px;align-items:center;padding:7px 0}
-.staffrow input{flex:1;min-width:0;font:14px/1.2 inherit;border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:var(--paper);color:var(--ink)}
-.staffrow input.nm-in{flex:1.2}
-.staffdel{flex:0 0 auto;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--warn);font-weight:800;font-size:16px}
-.staffempty{font-size:12.5px;color:var(--sub);padding:6px 0}
-.addrow{display:flex;gap:8px;align-items:center;padding:10px 0 2px;border-top:1px dashed var(--line);margin-top:6px}
-.addstorerow{display:flex;gap:8px;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
-.addstorerow input{flex:1;font:14px/1.2 inherit;border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:var(--paper);color:var(--ink)}
+/* ---------- contacts ---------- */
+.syncbadge{font-size:10.5px;font-weight:800;margin-left:8px;letter-spacing:.2px;text-transform:none}
+.syncbadge.synced{color:var(--ok)}
+.syncbadge.offline{color:var(--warn)}
+.syncbadge.syncing{color:var(--sub)}
+.contactsHead{padding:2px 2px 4px}
+.contactsHead h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.2px}
+.contactsHead p{margin:4px 0 0;font-size:12.5px;color:var(--sub)}
+.searchWrap{margin:10px 0 14px}
+.searchInput{width:100%;font:15px/1.2 inherit;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.searchInput::placeholder{color:var(--sub)}
+
+/* ---------- today tab (shared checklist + overview) ---------- */
+.todayHead{padding:2px 2px 12px}
+.todayHead h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.2px}
+.whoAmI{margin-top:5px;font-size:12px;color:var(--sub);display:flex;align-items:center;gap:6px}
+.whoAmI b{color:var(--ink)}
+.whoAmI a{color:var(--accent);font-weight:700;text-decoration:none}
+.taskrow{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:8px;box-shadow:var(--shadow);cursor:pointer}
+.taskcbx{width:26px;height:26px;border-radius:8px;border:2px solid var(--line);flex:0 0 auto;display:grid;place-items:center;font-size:15px;font-weight:800;color:transparent}
+.taskrow.done .taskcbx{background:var(--ok);border-color:var(--ok);color:#fff}
+.taskinfo{flex:1;min-width:0}
+.tasklabel{font-weight:700;font-size:14.5px}
+.tasksub{font-size:11.5px;color:var(--sub);margin-top:2px}
+.taskrow.done .tasksub{color:var(--ok)}
+.todaySalesHead{font-size:12px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--sub);margin:18px 2px 8px}
+.ovrow{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px 13px;margin-bottom:7px}
+.ovname{flex:1;min-width:0;font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ovnum{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ovnum.hit{color:var(--ok);font-weight:700}
+.sheet-help{font-size:12px;color:var(--sub);margin:0 0 12px;line-height:1.5}
+
+.ccard{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+.cc-head{display:flex;align-items:center;gap:8px;padding:13px 14px 9px}
+.cc-title{font-size:14.5px;font-weight:800;flex:1;min-width:0}
+.cc-count{font-size:11.5px;color:var(--sub);white-space:nowrap}
+.cc-remove{flex:0 0 auto;width:28px;height:28px;border-radius:8px;border:none;background:transparent;color:var(--sub);font-size:15px}
+.cc-hours{display:flex;align-items:center;gap:6px;padding:0 14px 10px;font-size:11.5px;color:var(--sub)}
+.cc-hours .edit-ic{color:var(--accent);font-weight:700}
+.cc-people{border-top:1px solid var(--line)}
+.cc-person{display:flex;align-items:center;gap:11px;padding:11px 14px;cursor:pointer}
+.cc-person:active{background:var(--paper)}
+.cc-avatar{width:32px;height:32px;border-radius:9px;background:var(--chip);color:var(--sub);flex:0 0 auto;display:grid;place-items:center;font-size:12px;font-weight:800}
+.cc-pinfo{flex:1;min-width:0}
+.cc-pname{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-psub{font-size:11.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-nophone{font-size:10.5px;font-weight:700;padding:3px 7px;border-radius:6px;background:var(--warn-soft);color:var(--warn);flex:0 0 auto}
+.cc-addperson{display:flex;align-items:center;gap:8px;padding:12px 14px;color:var(--accent);font-weight:700;font-size:13.5px;cursor:pointer;border-top:1px dashed var(--line)}
+.cc-empty{padding:16px 14px;font-size:12.5px;color:var(--sub)}
+
+.addstoretile{display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed var(--sub);border-radius:14px;padding:14px;font-size:13.5px;font-weight:700;color:var(--sub);cursor:pointer;margin-bottom:16px}
+.addstorerow{display:flex;gap:8px;align-items:center;margin-bottom:16px}
+.addstorerow input{flex:1;font:14px/1.2 inherit;border:1px solid var(--line);border-radius:9px;padding:10px 11px;background:var(--card);color:var(--ink)}
+
+/* ---------- bottom-sheet dialogs (person / hours editors) ---------- */
+dialog.sheet{border:none;border-radius:20px 20px 0 0;padding:16px 18px calc(16px + env(safe-area-inset-bottom));max-width:440px;width:92%;background:var(--card);color:var(--ink);position:fixed;bottom:0;top:auto;margin:0 auto}
+dialog.sheet::backdrop{background:rgba(10,8,6,.55)}
+.sheet-handle{width:36px;height:4px;border-radius:99px;background:var(--line);margin:0 auto 14px}
+.sheet-title{font-size:15.5px;font-weight:800;margin-bottom:14px}
+.sheet-label{display:block;font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:5px}
+.sheet-label .optional{font-weight:500;text-transform:none;color:var(--sub)}
+.sheet-input{width:100%;font:15px/1.2 inherit;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--paper);color:var(--ink);margin-bottom:14px}
+.phoneWrap{position:relative}
+.phoneWrap .sheet-input{padding-right:100px}
+.phonebadge{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;white-space:nowrap}
+.phonebadge.ok{color:var(--ok)}
+.phonebadge.warn{color:var(--warn)}
+.sheet-actions{display:flex;gap:10px;margin-top:4px}
+.sheet-actions .btn-primary{flex:1}
+.btn-danger{flex:0 0 auto;background:var(--warn-soft);color:var(--warn);border:none;border-radius:10px;padding:11px 16px;font:inherit;font-weight:800;font-size:13.5px}
+.sheet-cancel{width:100%;background:transparent;border:none;color:var(--sub);font:inherit;font-weight:700;font-size:13px;padding:12px;margin-top:2px}
+.hoursgrid{display:flex;gap:7px}
+.hourfield{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
+.hourfield label{font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:var(--sub);font-weight:700}
+.hourfield input{width:100%;font:13px/1.2 inherit;font-weight:700;border:1px solid var(--line);border-radius:9px;padding:7px 6px;background:var(--paper);color:var(--ink)}
+
+.undosnack{position:fixed;left:14px;right:14px;bottom:-80px;z-index:9;display:flex;align-items:center;gap:12px;background:var(--ink);color:var(--paper);border-radius:12px;padding:12px 16px;font-size:13.5px;transition:bottom .22s ease}
+.undosnack.show{bottom:calc(var(--dock-h, 90px) + 14px)}
+.undosnack span{flex:1}
+.undosnack button{flex:0 0 auto;background:transparent;border:none;color:var(--accent);font:inherit;font-weight:800;font-size:13.5px}
 .btn-add{flex:0 0 auto;background:var(--ok);color:#fff;border:none;border-radius:9px;padding:9px 14px;font:inherit;font-weight:800;font-size:13px}
 
 /* ---------- send dialog ---------- */
@@ -183,13 +257,17 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
     <button data-mode="closers">🌙&nbsp; Closers</button>
     <button data-mode="lowsales">📉&nbsp; Low</button>
   </div>
-  <div id="floorlineOpeners">
+  <button class="todaySummary" id="todaySummaryBtn" aria-expanded="false">
+    <span id="todaySummaryText"></span>
+    <span class="chev">⌄</span>
+  </button>
+  <div id="floorlineOpeners" class="todayDetail">
     <div class="bucketseg headerbucketseg" id="headerBucketSeg">
       <button data-bucket="monthu">Mon–Thu</button>
       <button data-bucket="frisun">Fri &amp; Sun</button>
       <button data-bucket="sat">Sat</button>
     </div>
-    <div class="floorline">floor <b id="floorLabel"></b><span class="dot"></span><span id="autoTag"></span></div>
+    <div class="floorline">minimum <b id="floorLabel"></b><span class="dot"></span><span id="autoTag"></span></div>
   </div>
   <div class="floorline" id="floorlineLow" style="display:none">Texting stores under <b id="lowThreshLabel"></b> in sales today</div>
 </header>
@@ -198,7 +276,18 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
   <div id="list"></div>
 </section>
 
+<section class="page" id="pageToday">
+  <div class="todayHead">
+    <h2>Today's checklist</h2>
+    <div class="whoAmI">You: <b id="myNameLabel"></b> <a href="#" id="changeNameLink">change</a><span class="syncbadge" id="teamSyncBadge"></span></div>
+  </div>
+  <div id="taskList"></div>
+  <div class="todaySalesHead">Sales vs. goal right now</div>
+  <div id="todayOverviewList"></div>
+</section>
+
 <section class="page" id="pageSetup">
+  <div class="setupNote">Everything below saves automatically as you type — no save button needed.</div>
 
   <div class="card">
     <div class="card-h">
@@ -220,7 +309,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
     <div class="card-h">
       <div class="eyebrow">Step 2 · As needed</div>
       <h3>✏️ Opener / Closer templates</h3>
-      <p>Wording and the sales-floor rule for each part of the week. Every text also gets an automatic stat drop (LY total, LY average order, $/hr) appended below your message. LY numbers themselves come from Step 1's paste, or can be tweaked right on each store's card in Send.</p>
+      <p>Wording and the minimum daily goal for each part of the week. Every text also gets an automatic numbers block (LY total, LY average order, $/hr) appended below your message. LY numbers themselves come from Step 1's paste, or can be tweaked right on each store's card in Send.</p>
     </div>
     <div class="card-b">
       <div class="bucketseg" id="editBucketSeg">
@@ -234,7 +323,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
         <label>use this instead</label>
       </div>
       <textarea class="prose" id="tmplBox"></textarea>
-      <div class="hint">Use <b>{name}</b>, <b>{amount}</b>, and <b>{day}</b> (fills in the real day, e.g. "Friday" or "Sunday" — handy since this bucket covers more than one day). {amount} is today's live goal (LY vs. the floor above, minus today's sales). The stat drop is added automatically, using 10hrs for Openers and 5hrs for Closers.</div>
+      <div class="hint">Use <b>{name}</b>, <b>{amount}</b>, and <b>{day}</b> (fills in the real day, e.g. "Friday" or "Sunday" — handy since these days share one message). {amount} is today's live goal (last year's number, or the minimum above if that's higher, minus what's sold today). The numbers block is added automatically, and paces itself against the real hours left until that store closes today (set per store in Contacts).</div>
     </div>
   </div>
 
@@ -255,7 +344,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
         <button class="btn-primary" id="lowPreset5pm" style="background:var(--chip);color:var(--ink)">5PM check → $300</button>
       </div>
       <textarea class="prose" id="lowTmplBox"></textarea>
-      <div class="hint">Use <b>{name}</b>, <b>{amount}</b>, and <b>{day}</b> — {amount} is that store's real LY gap (no floor, no stat drop).</div>
+      <div class="hint">Use <b>{name}</b>, <b>{amount}</b>, and <b>{day}</b> — {amount} is how far behind that store is today vs. last year (no minimum applied, no numbers block added).</div>
     </div>
   </div>
 
@@ -263,28 +352,19 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
 </section>
 
 <section class="page" id="pageContacts">
-  <div class="card">
-    <div class="card-h">
-      <div class="eyebrow">District Staff Contacts</div>
-      <h3>👥 Manage stores &amp; staff</h3>
-      <p>Edit a phone number, add a new hire, remove someone who's left, or add/remove a whole store — right here, no re-pasting a whole contact sheet.</p>
-    </div>
-    <div class="card-b">
-      <div class="storerow">
-        <select class="storeSelect" id="staffStoreSelect"></select>
-        <button class="btn-removestore" id="removeStoreBtn" title="Remove this store">Remove store</button>
-      </div>
-      <div id="staffList"></div>
-      <div class="addrow">
-        <input type="text" id="newPersonName" placeholder="New person's name">
-        <input type="tel" id="newPersonPhone" placeholder="Phone" inputmode="tel">
-        <button class="btn-add" id="addPersonBtn">Add</button>
-      </div>
-      <div class="addstorerow">
-        <input type="text" id="newStoreName" placeholder="New store name">
-        <button class="btn-add" id="addStoreBtn">+ Add store</button>
-      </div>
-    </div>
+  <div class="contactsHead">
+    <h2>Contacts<span class="syncbadge" id="syncBadge"></span></h2>
+    <p>Tap anyone to edit them. Changes save right away.</p>
+  </div>
+  <div class="searchWrap">
+    <input type="text" id="contactSearch" class="searchInput" placeholder="Find a store or person">
+  </div>
+  <div id="contactsList"></div>
+  <div class="addstoretile" id="addStoreTile">+ Add a store</div>
+  <div class="addstorerow" id="addStoreRow" style="display:none">
+    <input type="text" id="newStoreName" placeholder="New store name">
+    <button class="btn-add" id="addStoreBtn">Add</button>
+    <button class="btn-clear" id="cancelAddStoreBtn">Cancel</button>
   </div>
 </section>
 
@@ -295,6 +375,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
   </div>
   <nav class="tabbar">
     <button class="on" data-page="pageSend"><span class="ic">💬</span>Send</button>
+    <button data-page="pageToday"><span class="ic">📋</span>Today</button>
     <button data-page="pageContacts"><span class="ic">👥</span>Contacts</button>
     <button data-page="pageSetup"><span class="ic">⚙️</span>Setup</button>
   </nav>
@@ -306,8 +387,122 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
   <div class="dlg-f"><button id="close">Done</button></div>
 </dialog>
 
+<dialog id="personDlg" class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="personDlgTitle">Edit person</div>
+  <div class="sheet-body">
+    <label class="sheet-label">Name</label>
+    <input type="text" id="personNameInput" class="sheet-input" placeholder="Full name">
+    <label class="sheet-label">Phone</label>
+    <div class="phoneWrap">
+      <input type="tel" id="personPhoneInput" inputmode="tel" class="sheet-input" placeholder="(555) 123-4567">
+      <span class="phonebadge" id="phoneValidBadge"></span>
+    </div>
+    <label class="sheet-label">Role <span class="optional">(optional)</span></label>
+    <input type="text" id="personRoleInput" class="sheet-input" placeholder="e.g. Store manager">
+  </div>
+  <div class="sheet-actions">
+    <button class="btn-primary sheet-save" id="personSaveBtn">Save</button>
+    <button class="btn-danger" id="personDeleteBtn">Remove</button>
+  </div>
+  <button class="sheet-cancel" id="personCancelBtn">Cancel</button>
+</dialog>
+
+<dialog id="hoursDlg" class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Closing time — <span id="hoursDlgMall"></span></div>
+  <div class="sheet-body">
+    <div class="hoursgrid">
+      <div class="hourfield"><label>Mon–Thu</label><input type="time" id="hoursMonThu"></div>
+      <div class="hourfield"><label>Fri</label><input type="time" id="hoursFri"></div>
+      <div class="hourfield"><label>Sat</label><input type="time" id="hoursSat"></div>
+      <div class="hourfield"><label>Sun</label><input type="time" id="hoursSun"></div>
+    </div>
+    <div class="hint">Texts pace themselves against the real hours left until close.</div>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn-primary sheet-save" id="hoursDoneBtn">Done</button>
+  </div>
+</dialog>
+
+<dialog id="nameDlg" class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">What's your name?</div>
+  <div class="sheet-body">
+    <p class="sheet-help">So the team can see who covered a check-in. No password — just so it shows up right.</p>
+    <input type="text" id="myNameInput" class="sheet-input" placeholder="Your name">
+  </div>
+  <div class="sheet-actions">
+    <button class="btn-primary sheet-save" id="myNameSaveBtn">Save</button>
+  </div>
+</dialog>
+
+<div id="undoSnack" class="undosnack"></div>
+
+<script type="module">
+// Cross-device team sync (today's sales + the shared checklist) — dormant until
+// firebase-sync/SETUP.md is followed and FIREBASE_CONFIG below is filled in. Until then,
+// window.districtSync.configured is false and every device stays local-only, exactly like
+// before this feature shipped.
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBv4dA3zhY9YogpFi1RYKeopUb10sL8LAc",
+  authDomain: "district-texter.firebaseapp.com",
+  projectId: "district-texter",
+  storageBucket: "district-texter.firebasestorage.app",
+  messagingSenderId: "736288733886",
+  appId: "1:736288733886:web:dc630d72503f722d283cef"
+};
+
+function makeStub(){
+  return { configured:false, onDay(){ return ()=>{}; }, setSales(){}, setTask(){} };
+}
+
+if (!FIREBASE_CONFIG.projectId) {
+  window.districtSync = makeStub();
+  window.dispatchEvent(new Event('districtsync-ready'));
+} else {
+  try {
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js');
+    const { getAuth, signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js');
+    const { getFirestore, doc, onSnapshot, setDoc } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js');
+
+    const app = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const ready = signInAnonymously(auth).catch(err=>{ console.error('districtSync sign-in failed', err); });
+
+    window.districtSync = {
+      configured: true,
+      onDay(dateKey, cb){
+        const ref = doc(db, 'days', dateKey);
+        return onSnapshot(ref, snap=>cb(snap.exists() ? snap.data() : null), err=>console.error('districtSync listen failed', err));
+      },
+      async setSales(dateKey, mall, value){
+        await ready;
+        const ref = doc(db, 'days', dateKey);
+        // Nested plain objects (not dotted-string keys) so {merge:true} deep-merges just this
+        // one store, leaving every other store's sales untouched — dotted keys are only
+        // treated as field paths by updateDoc(), not by setDoc(..., {merge:true}).
+        await setDoc(ref, { todaySales: { [mall]: value } }, { merge:true }).catch(err=>console.error('districtSync setSales failed', err));
+      },
+      async setTask(dateKey, taskKey, done, by){
+        await ready;
+        const ref = doc(db, 'days', dateKey);
+        await setDoc(ref, { tasks: { [taskKey]: { done, by, at: Date.now() } } }, { merge:true }).catch(err=>console.error('districtSync setTask failed', err));
+      }
+    };
+    await ready;
+    window.dispatchEvent(new Event('districtsync-ready'));
+  } catch (err) {
+    console.error('districtSync failed to initialize, falling back to local-only', err);
+    window.districtSync = makeStub();
+    window.dispatchEvent(new Event('districtsync-ready'));
+  }
+}
+</script>
+
 <script>
-window.__BUILD__ = "2026-07-15T14:26:02.754Z";
+window.__BUILD__ = "2026-07-23T00:00:00.000Z";
 window.__DATA__ = [{"mall":"ARUNDEL MILLS STORE","goal":546,"staff":[{"name":"JAMIE GRIFFIN","phone":"14435917052"},{"name":"Kaiya Jackson","phone":"14432026437"},{"name":"ARIELLE MABREY","phone":"16672891642"},{"name":"Ebun Omotayo- Benson","phone":"12402640499"}]},{"mall":"CAROLINA PLACE","goal":54,"staff":[{"name":"Evelyn \"Evie\" Stewart","phone":"17049898319"},{"name":"Ah'venique Francis","phone":"17047722068"},{"name":"ALYSON AVERETTE","phone":"19843036629"}]},{"mall":"CASTLETON SQUARE","goal":411,"staff":[{"name":"SHARRECE FRYE","phone":"18125815225"},{"name":"Tainesha Lovett","phone":"17737339819"},{"name":"JYLIAN WALKER","phone":"14632689089"}]},{"mall":"GALLERIA FORT LAUDERDALE","goal":926,"staff":[{"name":"MARBELLA MARTINEZ","phone":"19545341237"},{"name":"Michelle Richardson","phone":"15616058156"},{"name":"MOLLY OATES","phone":"9548509334"},{"name":"Beatrice Piludu","phone":"17868930250"}]},{"mall":"GURNEE MILLS","goal":533,"staff":[{"name":"AURORA  AREVALO","phone":"12244408645"},{"name":"LINDSEY CARREON","phone":"12247629820"},{"name":"GWEN MOORE","phone":"17086031480"}]},{"mall":"KING OF PRUSSIA STORE","goal":624,"staff":[{"name":"DIANA BRAVO","phone":"12157911467"},{"name":"ALAYNE MCPHAIL","phone":"12159770389"},{"name":"DAYONNA THOMAS","phone":"12679167479"}]},{"mall":"ORLAND SQUARE","goal":1391,"staff":[{"name":"ZAID HAMMAD","phone":"17084657040"},{"name":"MARLY RAMIREZ","phone":"17085004426"},{"name":"DANA THAHER","phone":"17088566583"},{"name":"Corinne Veles","phone":"17087380644"}]},{"mall":"PALISADES STORE","goal":226,"staff":[{"name":"Briana Giovinazzo","phone":"18457094015"},{"name":"Sheyli Lemus","phone":"18454059525"},{"name":"Pricsilla Diaz","phone":"19144341822"}]},{"mall":"SOMERSET COLLECTIONS","goal":2001,"staff":[{"name":"Ariande Quates","phone":"12483467265"},{"name":"Ashley Sussani","phone":"12489855873"},{"name":"Desiree Strickland","phone":"15862784678"}]},{"mall":"TOWSON SQUARE STORE","goal":509,"staff":[{"name":"CADANCE MOYANO","phone":"14436767882"},{"name":"Skiya Godwin","phone":"19102803915"},{"name":"Dominic Link","phone":"16673048193"}]},{"mall":"TREASURE COAST","goal":219,"staff":[{"name":"SHAR WEISENBERG","phone":"14357494025"},{"name":"STEPHANIE MARQUES","phone":"16034043311"},{"name":"LINDSEY JEAN-LEWIS","phone":"15613792735"},{"name":"HANTZ ETIENNE","phone":"17863821658"}]},{"mall":"UTC","goal":0,"staff":[{"name":"Skye Samuel","phone":"19419613178"},{"name":"Sharon Wortman","phone":"19419621888"},{"name":"Briana Damas-Mendez","phone":"19292313400"},{"name":"Andrea Morales","phone":"17604097923"}]},{"mall":"WALDEN GALLERIA","goal":515,"staff":[{"name":"Amani Watson","phone":"17164655019"},{"name":"Lalia Mostiller","phone":"17168301222"},{"name":"Hajer Yahya","phone":"17164957793"}]},{"mall":"WOODFIELD STORE","goal":1105,"staff":[{"name":"JASMIN MUNOZ","phone":"16304400828"},{"name":"Marcella Krukowski","phone":"13126132669"},{"name":"VICTORIA GONZALEZ","phone":"12246059074"},{"name":"Elena Bogan","phone":"12244282815"}]}];
 window.__TEMPLATES__ = {"monthu":{"floor":400,"msg":"Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?"},"frisun":{"floor":700,"msg":"Hey {name}! 🎉 Happy {day}! Let's keep that energy up today😍 We only need ${amount} to beat LY — very doable with a couple solid bundles! Text me the code word for today's morning message so I know you're locked in, and what sales goal do you write to hit bonus tonight?"},"sat":{"floor":900,"msg":"Hey {name}! 🥳 It's Sales Saturday — our biggest day of the week, let's make it count! We only need ${amount} to beat LY. Focus on sales only today! Text me the code word for today's morning message so I know you're ready, and what sales goal do you write to hit bonus tonight?"}};
 window.__LOWTEMPLATE__ = {"threshold":100,"msg":"Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?"};
@@ -349,12 +544,14 @@ const sel = new Set();
 const DAY_KEYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const DAY_FULL=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const todayIdx = (new Date().getDay()+6)%7; // Mon=0..Sun=6
-const todayDateStr = new Date().toISOString().slice(0,10);
+// Local calendar date, not UTC — using UTC here rolled "today" over mid-evening
+// in every US timezone, silently wiping the day's sales right when closers need them.
+function localDateStr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+const todayDateStr = localDateStr(new Date());
 function bucketForIdx(i){ if(i===5) return 'sat'; if(i===4||i===6) return 'frisun'; return 'monthu'; }
 let selectedBucket = bucketForIdx(todayIdx);
 const BUCKET_LABEL={monthu:'Mon–Thu',frisun:'Fri & Sun',sat:'Saturday'};
 let mode = 'openers'; // 'openers' | 'closers' | 'lowsales'
-const HOURS = { openers:10, closers:5 };
 
 document.getElementById('dayLabel').textContent = DAY_FULL[todayIdx];
 
@@ -383,11 +580,144 @@ let lyAov = loadAov();
 for(const s of data){ if(!lyAov[s.mall]) lyAov[s.mall]=DAY_KEYS.map(()=>0); }
 saveAov(lyAov);
 
+// ---- store hours (persisted; per-mall close-time overrides, district default otherwise) ----
+// Close time per weekday [Mon,Tue,Wed,Thu,Fri,Sat,Sun]. Only close time matters for pacing.
+const HOURS_KEY='districtTexter.storeHours.v1';
+const DEFAULT_CLOSE=['20:00','20:00','20:00','20:00','21:00','21:00','19:00'];
+function loadStoreHours(){ try{ return JSON.parse(localStorage.getItem(HOURS_KEY))||{}; }catch{ return {}; } }
+function saveStoreHours(h){ localStorage.setItem(HOURS_KEY, JSON.stringify(h)); }
+let storeHours = loadStoreHours();
+function closeTimesFor(mall){ const ov=storeHours[mall]; return (ov && ov.length===7) ? ov : DEFAULT_CLOSE; }
+function hoursLeftFor(mall){
+  const [ch,cm] = closeTimesFor(mall)[todayIdx].split(':').map(Number);
+  const now = new Date();
+  const nowDec = now.getHours() + now.getMinutes()/60;
+  return Math.max(0.5, (ch+cm/60) - nowDec);
+}
+function fmtHours(h){ const r=Math.round(h*10)/10; return (r%1===0) ? r+'.0' : r; }
+
+// ---- Google Sheet sync (contacts + store hours) ----
+// SHEETS_ENDPOINT/SHEETS_KEY come from deploying google-sheets-sync/Code.gs as an Apps
+// Script Web App (see google-sheets-sync/SETUP.md). Left blank, the app works exactly as
+// before, purely on the baked-in roster + local edits — sync is entirely additive.
+const SHEETS_ENDPOINT = '';
+const SHEETS_KEY = '';
+const SYNC_CACHE_KEY = 'districtTexter.sheetCache.v1';
+const SYNC_QUEUE_KEY = 'districtTexter.syncQueue.v1';
+let syncStatus = SHEETS_ENDPOINT ? 'idle' : 'unconfigured';
+function loadSyncCache(){ try{ return JSON.parse(localStorage.getItem(SYNC_CACHE_KEY))||null; }catch{ return null; } }
+function saveSyncCache(c){ localStorage.setItem(SYNC_CACHE_KEY, JSON.stringify(c)); }
+function loadSyncQueue(){ try{ return JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY))||[]; }catch{ return []; } }
+function saveSyncQueue(q){ localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(q)); }
+let syncQueue = loadSyncQueue();
+function updateSyncBadge(){
+  const el = document.getElementById('syncBadge');
+  if (!el) return;
+  const map = {
+    idle:['',''], syncing:['syncing','Syncing…'], synced:['synced','Synced ✓'],
+    offline:['offline','Offline — will sync'], unconfigured:['',''], error:['offline','Sync error']
+  };
+  const [cls,text] = map[syncStatus] || ['',''];
+  el.className = 'syncbadge '+cls;
+  el.textContent = text;
+}
+function applyContactsFromSheet(contactsArr){
+  // The sheet becomes the source of truth for the roster. Local stores added (e.g. via
+  // Contacts > + Add store) but not yet synced are kept in view via extraMalls until
+  // their first successful push lands them in the sheet too.
+  data.length = 0;
+  for (const store of contactsArr){
+    if (isIgnoredMall(store.mall) || removedMalls.includes(store.mall)) continue;
+    data.push({ mall: store.mall, staff: (store.staff||[]).map(p=>({name:p.name, phone:p.phone, role:p.role||''})) });
+  }
+  for (const m of extraMalls) if (!data.some(s=>s.mall===m)) data.push({mall:m, staff:[]});
+  for (const s of data){
+    if (!lyStore[s.mall]) lyStore[s.mall]=DAY_KEYS.map(()=>0);
+    if (!lyAov[s.mall]) lyAov[s.mall]=DAY_KEYS.map(()=>0);
+  }
+  saveLy(lyStore); saveAov(lyAov);
+}
+function applyHoursFromSheet(hoursObj){
+  storeHours = hoursObj || {};
+  saveStoreHours(storeHours);
+}
+async function pullFromSheet(refreshUi){
+  if (!SHEETS_ENDPOINT) return;
+  syncStatus = 'syncing'; updateSyncBadge();
+  try{
+    const [cRes,hRes] = await Promise.all([
+      fetch(SHEETS_ENDPOINT+'?action=contacts', {cache:'no-store'}),
+      fetch(SHEETS_ENDPOINT+'?action=hours', {cache:'no-store'})
+    ]);
+    const cJson = await cRes.json(), hJson = await hRes.json();
+    if (!cJson.ok || !hJson.ok) throw new Error('bad response');
+    applyContactsFromSheet(cJson.data);
+    applyHoursFromSheet(hJson.data);
+    saveSyncCache({ contacts:cJson.data, hours:hJson.data, at:Date.now() });
+    syncStatus = 'synced';
+    if (refreshUi){ render(); renderContacts(); }
+  }catch(err){ syncStatus='offline'; }
+  updateSyncBadge();
+}
+async function sendMutation(payload){
+  if (!SHEETS_ENDPOINT) return; // sync not configured — local-only, same as before this feature shipped
+  try{
+    const res = await fetch(SHEETS_ENDPOINT, { method:'POST', body: JSON.stringify(Object.assign({key:SHEETS_KEY}, payload)) });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error||'sync failed');
+    syncStatus = 'synced';
+  }catch(err){
+    syncQueue.push(payload); saveSyncQueue(syncQueue);
+    syncStatus = 'offline';
+  }
+  updateSyncBadge();
+}
+async function flushSyncQueue(){
+  if (!SHEETS_ENDPOINT || !syncQueue.length) return;
+  const remaining = [];
+  for (const payload of syncQueue){
+    try{
+      const res = await fetch(SHEETS_ENDPOINT, { method:'POST', body: JSON.stringify(Object.assign({key:SHEETS_KEY}, payload)) });
+      const json = await res.json();
+      if (!json.ok) throw new Error();
+    }catch(err){ remaining.push(payload); }
+  }
+  syncQueue = remaining; saveSyncQueue(syncQueue);
+  syncStatus = remaining.length ? 'offline' : 'synced';
+  updateSyncBadge();
+}
+window.addEventListener('online', flushSyncQueue);
+const cachedSheet = loadSyncCache();
+if (cachedSheet){ applyContactsFromSheet(cachedSheet.contacts); applyHoursFromSheet(cachedSheet.hours); }
+
 // ---- today's actual sales (persisted per calendar day; resets automatically each new day) ----
 const TODAY_KEY='districtTexter.today.'+todayDateStr;
 function loadToday(){ try{ return JSON.parse(localStorage.getItem(TODAY_KEY))||{}; }catch{ return {}; } }
 function saveToday(t){ localStorage.setItem(TODAY_KEY, JSON.stringify(t)); }
 let todaySales = loadToday();
+
+// ---- shared team identity ("who am I") ----
+const MY_NAME_KEY = 'districtTexter.myName.v1';
+let myName = localStorage.getItem(MY_NAME_KEY) || '';
+
+// ---- today's team checklist (persisted per calendar day; who did what, and when) ----
+const TASKS_KEY = 'districtTexter.tasks.'+todayDateStr;
+const TASK_DEFS = [
+  {key:'openers', label:'Opener texts sent'},
+  {key:'low1pm', label:'1pm low-sales check'},
+  {key:'low5pm', label:'5pm low-sales check'},
+  {key:'closers', label:'Closer texts sent'}
+];
+function defaultTasks(){ const o={}; for (const t of TASK_DEFS) o[t.key]={done:false,by:null,at:null}; return o; }
+function loadTasks(){ try{ const t=JSON.parse(localStorage.getItem(TASKS_KEY)); if(t) return Object.assign(defaultTasks(), t); }catch{} return defaultTasks(); }
+function saveTasksLocal(t){ localStorage.setItem(TASKS_KEY, JSON.stringify(t)); }
+let teamTasks = loadTasks();
+function setTask(key, done){
+  teamTasks[key] = { done, by: myName || 'Someone', at: Date.now() };
+  saveTasksLocal(teamTasks);
+  renderToday();
+  if (window.districtSync && window.districtSync.configured) window.districtSync.setTask(todayDateStr, key, done, myName||'Someone');
+}
 
 // ---- low sales template (separate from the day-bucket templates) ----
 const LOWTPL_KEY='districtTexter.lowtemplate.v1';
@@ -403,7 +733,7 @@ function goalInfo(mall){
   const target = floored ? floor : ly;
   const sold = Number(todaySales[mall])||0;
   const goal = Math.round(target - sold);
-  const hours = HOURS[mode] || HOURS.openers;
+  const hours = hoursLeftFor(mall);
   const perHour = Math.round(Math.max(0,goal) / hours);
   return { ly, aov, floor, floored, target, sold, goal: Math.max(0,goal), hit: goal<=0, perHour, hours };
 }
@@ -422,7 +752,12 @@ function canonMall(loc){
   const U=loc.toUpperCase();
   const exact = data.find(s=>s.mall.toUpperCase()===U);
   if (exact) return exact.mall;
-  for (const [tok,mall] of MALL_TOKENS) if (U.includes(tok) && data.some(s=>s.mall===mall)) return mall;
+  // Word-boundary match — short tokens like "UTC" must not match inside another
+  // word (e.g. "DUTCHESS MALL" was matching UTC before this).
+  for (const [tok,mall] of MALL_TOKENS){
+    const re = new RegExp('\\b'+tok.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b');
+    if (re.test(U) && data.some(s=>s.mall===mall)) return mall;
+  }
   return null;
 }
 function parseCSVText(text){
@@ -523,7 +858,7 @@ function render(){
     } else {
       const info = goalInfo(s.mall);
       const pillClass = info.hit ? 'hit' : (info.floored ? 'floor' : '');
-      pillHtml = '<div class="goalpill '+pillClass+'"><small>'+(info.hit?'Hit already':(info.floored?'Goal (floor)':'Goal left'))+'</small>$'+info.goal.toLocaleString()+'</div>';
+      pillHtml = '<div class="goalpill '+pillClass+'"><small>'+(info.hit?'Hit already':(info.floored?'Goal (minimum)':'Goal left'))+'</small>$'+info.goal.toLocaleString()+'</div>';
       inputsHtml = '<div class="inputs">'+
           '<div class="field quiet"><label>LY</label><input type="number" inputmode="decimal" data-ly-mall="'+encodeURIComponent(s.mall)+'" value="'+info.ly+'"></div>'+
           '<div class="field quiet"><label>AOV</label><input type="number" inputmode="decimal" data-aov-mall="'+encodeURIComponent(s.mall)+'" value="'+info.aov+'"></div>'+
@@ -552,6 +887,7 @@ function render(){
       todaySales[mall]=inp.value===''?null:Number(inp.value);
       saveToday(todaySales);
       render();
+      if (window.districtSync && window.districtSync.configured) window.districtSync.setSales(todayDateStr, mall, todaySales[mall]);
     });
   });
   list.querySelectorAll('[data-ly-mall]').forEach(inp=>{
@@ -579,8 +915,10 @@ document.querySelectorAll('#modeSeg button').forEach(b=>b.addEventListener('clic
   document.querySelectorAll('#modeSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
   mode = b.dataset.mode;
   sel.clear(); updateCount();
-  document.getElementById('floorlineOpeners').style.display = mode==='lowsales' ? 'none' : 'flex';
-  document.getElementById('floorlineLow').style.display = mode==='lowsales' ? 'flex' : 'none';
+  const isLow = mode==='lowsales';
+  document.getElementById('todaySummaryBtn').style.display = isLow ? 'none' : 'flex';
+  document.getElementById('floorlineLow').style.display = isLow ? 'flex' : 'none';
+  if (isLow) collapseTodayDetail();
   renderFloorLine();
   render();
 }));
@@ -591,18 +929,39 @@ document.querySelectorAll('nav.tabbar button').forEach(b=>b.addEventListener('cl
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById(b.dataset.page).classList.add('on');
   document.getElementById('sendBar').style.display = b.dataset.page==='pageSend' ? 'flex' : 'none';
+  if (b.dataset.page==='pageContacts') renderContacts();
+  if (b.dataset.page==='pageToday') {
+    updateMyNameLabel();
+    renderToday();
+    if (!myName) openNameDlg();
+  }
   syncDockPadding();
 }));
 
 // ---- keep body padding matched to the dock's real height so nothing hides behind it ----
 const dockEl = document.getElementById('dock');
-function syncDockPadding(){ document.body.style.paddingBottom = (dockEl.offsetHeight + 14) + 'px'; }
+function syncDockPadding(){
+  document.body.style.paddingBottom = (dockEl.offsetHeight + 14) + 'px';
+  document.documentElement.style.setProperty('--dock-h', dockEl.offsetHeight + 'px');
+}
 window.addEventListener('resize', syncDockPadding);
 window.addEventListener('orientationchange', syncDockPadding);
 
 // ---- header bucket picker (auto by real date, overridable for prepping ahead) ----
+// Collapsed by default behind a one-line summary — the default is right almost every
+// day, so the full day/minimum picker only needs to show up when someone taps for it.
 const AUTO_BUCKET = bucketForIdx(todayIdx);
 const headerBucketSeg = document.getElementById('headerBucketSeg');
+const todaySummaryBtn = document.getElementById('todaySummaryBtn');
+const todayDetailEl = document.getElementById('floorlineOpeners');
+function collapseTodayDetail(){
+  todayDetailEl.classList.remove('open');
+  todaySummaryBtn.setAttribute('aria-expanded','false');
+}
+todaySummaryBtn.addEventListener('click', ()=>{
+  const open = todayDetailEl.classList.toggle('open');
+  todaySummaryBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+});
 headerBucketSeg.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{
   selectedBucket = b.dataset.bucket;
   renderFloorLine();
@@ -610,13 +969,16 @@ headerBucketSeg.querySelectorAll('button').forEach(b=>b.addEventListener('click'
 }));
 function renderFloorLine(){
   headerBucketSeg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.bucket===selectedBucket));
-  document.getElementById('floorLabel').textContent = '$'+Number(templates[selectedBucket].floor).toLocaleString();
+  const floorAmt = '$'+Number(templates[selectedBucket].floor).toLocaleString();
+  document.getElementById('floorLabel').textContent = floorAmt;
   const tag = document.getElementById('autoTag');
-  if (selectedBucket===AUTO_BUCKET) { tag.className=''; tag.textContent = "today's default"; }
+  const isAuto = selectedBucket===AUTO_BUCKET;
+  if (isAuto) { tag.className=''; tag.textContent = "today's default"; }
   else { tag.className='manual'; tag.innerHTML = 'overridden — <a href="#" id="resetAutoBtn">use today</a>'; }
   const resetBtn = document.getElementById('resetAutoBtn');
   if (resetBtn) resetBtn.addEventListener('click', e=>{ e.preventDefault(); selectedBucket=AUTO_BUCKET; renderFloorLine(); render(); });
   document.getElementById('lowThreshLabel').textContent = '$'+Number(lowTemplate.threshold).toLocaleString();
+  document.getElementById('todaySummaryText').textContent = BUCKET_LABEL[selectedBucket]+' · minimum '+floorAmt+(isAuto?'':' · overridden');
 }
 
 // ---- template editor (Setup > Step 3) ----
@@ -663,69 +1025,196 @@ document.getElementById('lowPreset5pm').addEventListener('click', ()=>{
 });
 loadLowEditor();
 
-// ---- manage staff (Setup > Step 4) ----
-const staffStoreSelect = document.getElementById('staffStoreSelect');
-const staffListEl = document.getElementById('staffList');
-function sortedMalls(){ return data.map(s=>s.mall).sort(); }
-function currentStaffStore(){ return data.find(s=>s.mall===decodeURIComponent(staffStoreSelect.value||'')) || data[0]; }
-function renderStoreSelect(){
-  const prev = staffStoreSelect.value;
-  staffStoreSelect.innerHTML = sortedMalls().map(m=>'<option value="'+encodeURIComponent(m)+'">'+m+'</option>').join('');
-  const opts=[...staffStoreSelect.options].map(o=>o.value);
-  staffStoreSelect.value = opts.includes(prev) ? prev : (opts[0]||'');
-}
+// ---- contacts tab: search + card list + tap-to-edit sheets ----
 function saveStaffForMall(mall, staffArr){
   staffOverrides[mall] = staffArr;
   saveStaffOverrides(staffOverrides);
   const store = data.find(s=>s.mall===mall);
   if (store) store.staff = staffArr;
   render();
+  sendMutation({ type:'setStaff', mall, staff: staffArr });
 }
-function renderStaffList(){
-  const store = currentStaffStore();
-  staffListEl.innerHTML='';
-  if (!store){ return; }
-  if (!store.staff.length){ staffListEl.innerHTML='<div class="staffempty">No staff on file for this store yet — add one below.</div>'; }
-  store.staff.forEach((p,i)=>{
-    const row=document.createElement('div'); row.className='staffrow';
-    row.innerHTML='<input class="nm-in" type="text" value="'+(p.name||'').replace(/"/g,'&quot;')+'">'+
-      '<input type="tel" inputmode="tel" value="'+(p.phone||'')+'">'+
-      '<button class="staffdel" title="Remove">×</button>';
-    const [nmIn, phIn] = row.querySelectorAll('input');
-    const delBtn = row.querySelector('.staffdel');
-    function commit(){
-      const arr = store.staff.slice();
-      arr[i] = { name: nmIn.value.trim(), phone: phIn.value.replace(/\D/g,'') };
-      saveStaffForMall(store.mall, arr);
+function fmtTimeLabel(t){
+  const parts = String(t||'20:00').split(':').map(Number);
+  const h = parts[0], m = parts[1];
+  const ap = h>=12 ? 'pm' : 'am';
+  let h12 = h%12; if (h12===0) h12=12;
+  return h12 + (m ? ':'+String(m).padStart(2,'0') : '') + ap;
+}
+function hoursSummary(mall){
+  const ct = closeTimesFor(mall);
+  const mt=ct[0], fr=ct[4], sa=ct[5], su=ct[6];
+  if (mt===fr && fr===sa && sa===su) return 'Closes '+fmtTimeLabel(mt)+' every day';
+  if (fr===sa) return 'Closes '+fmtTimeLabel(mt)+' Mon–Thu · '+fmtTimeLabel(fr)+' Fri & Sat · '+fmtTimeLabel(su)+' Sun';
+  return 'Closes '+fmtTimeLabel(mt)+' Mon–Thu · '+fmtTimeLabel(fr)+' Fri · '+fmtTimeLabel(sa)+' Sat · '+fmtTimeLabel(su)+' Sun';
+}
+
+const contactsListEl = document.getElementById('contactsList');
+const contactSearchEl = document.getElementById('contactSearch');
+function renderContacts(){
+  const q = (contactSearchEl.value||'').trim().toLowerCase();
+  contactsListEl.innerHTML = '';
+  const malls = data.slice().sort((a,b)=>a.mall.localeCompare(b.mall));
+  let shown = 0;
+  for (const store of malls){
+    const mallMatches = !q || store.mall.toLowerCase().includes(q);
+    const peopleToShow = (q && !mallMatches) ? store.staff.filter(p=>(p.name||'').toLowerCase().includes(q)) : store.staff;
+    if (q && !mallMatches && !peopleToShow.length) continue;
+    shown++;
+    const card = document.createElement('div'); card.className='ccard';
+    card.innerHTML = '<div class="cc-head"><div class="cc-title">'+store.mall+'</div>'+
+      '<div class="cc-count">'+store.staff.length+' '+(store.staff.length===1?'person':'people')+'</div>'+
+      '<button class="cc-remove" title="Remove store">✕</button></div>'+
+      '<div class="cc-hours">'+hoursSummary(store.mall)+' <span class="edit-ic">Edit</span></div>'+
+      '<div class="cc-people"></div>';
+    const peopleWrap = card.querySelector('.cc-people');
+    if (!peopleToShow.length){
+      peopleWrap.innerHTML = '<div class="cc-empty">No one here yet.</div>';
+    } else {
+      peopleToShow.forEach(p=>{
+        const idx = store.staff.indexOf(p);
+        const initials = (p.name||'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+        const sub = p.phone ? (prettyPhone(p.phone) + (p.role ? ' · '+p.role : '')) : (p.role || 'No number yet — tap to add');
+        const row = document.createElement('div'); row.className='cc-person';
+        row.innerHTML = '<div class="cc-avatar">'+initials+'</div>'+
+          '<div class="cc-pinfo"><div class="cc-pname">'+titleCase(p.name)+'</div><div class="cc-psub">'+sub+'</div></div>'+
+          (p.phone ? '' : '<div class="cc-nophone">No #</div>');
+        row.addEventListener('click', ()=>openPersonEditor(store.mall, idx));
+        peopleWrap.appendChild(row);
+      });
     }
-    nmIn.addEventListener('change', commit);
-    phIn.addEventListener('change', commit);
-    delBtn.addEventListener('click', ()=>{
-      const arr = store.staff.slice(); arr.splice(i,1);
-      saveStaffForMall(store.mall, arr);
-      renderStaffList();
-    });
-    staffListEl.appendChild(row);
-  });
+    const addP = document.createElement('div'); addP.className='cc-addperson'; addP.innerHTML='+ Add person';
+    addP.addEventListener('click', ()=>openPersonEditor(store.mall, null));
+    peopleWrap.appendChild(addP);
+    card.querySelector('.cc-remove').addEventListener('click', ()=>removeStore(store.mall));
+    card.querySelector('.cc-hours').addEventListener('click', ()=>openHoursEditor(store.mall));
+    contactsListEl.appendChild(card);
+  }
+  if (!shown) contactsListEl.innerHTML = '<div class="cc-empty">No matches for "'+(contactSearchEl.value||'')+'".</div>';
 }
-staffStoreSelect.addEventListener('change', renderStaffList);
-document.getElementById('addPersonBtn').addEventListener('click', ()=>{
-  const nameEl=document.getElementById('newPersonName'), phoneEl=document.getElementById('newPersonPhone');
-  const name=nameEl.value.trim(), phone=phoneEl.value.replace(/\D/g,'');
-  if (!name) { nameEl.focus(); return; }
-  const store = currentStaffStore();
-  if (!store) return;
+contactSearchEl.addEventListener('input', renderContacts);
+
+// ---- person editor sheet ----
+const personDlg = document.getElementById('personDlg');
+let editingMall = null, editingIndex = null;
+function currentPhoneDigits(){
+  let d = document.getElementById('personPhoneInput').value.replace(/\D/g,'');
+  if (d.length===10) d = '1'+d;
+  return d;
+}
+function formatPhoneAsYouType(raw){
+  let d = raw.replace(/\D/g,'');
+  if (d.length>10 && d[0]==='1') d = d.slice(1);
+  d = d.slice(0,10);
+  let out = '';
+  if (d.length>0) out = '('+d.slice(0,3);
+  if (d.length>=3) out += ') ';
+  if (d.length>3) out += d.slice(3,6);
+  if (d.length>=6) out += '-';
+  if (d.length>6) out += d.slice(6,10);
+  return out;
+}
+function updatePhoneValidBadge(){
+  const badge = document.getElementById('phoneValidBadge');
+  const raw = document.getElementById('personPhoneInput').value.replace(/\D/g,'');
+  if (!raw){ badge.textContent=''; badge.className='phonebadge'; return; }
+  if (currentPhoneDigits().length===11){ badge.textContent='✓ US number'; badge.className='phonebadge ok'; }
+  else { badge.textContent='Check number'; badge.className='phonebadge warn'; }
+}
+document.getElementById('personPhoneInput').addEventListener('input', e=>{
+  e.target.value = formatPhoneAsYouType(e.target.value);
+  updatePhoneValidBadge();
+});
+function openPersonEditor(mall, index){
+  editingMall = mall; editingIndex = index;
+  const store = data.find(s=>s.mall===mall);
+  const p = (index!=null) ? store.staff[index] : {name:'',phone:'',role:''};
+  document.getElementById('personDlgTitle').textContent = index!=null ? 'Edit person' : 'Add person';
+  document.getElementById('personNameInput').value = p.name||'';
+  document.getElementById('personPhoneInput').value = p.phone ? formatPhoneAsYouType(p.phone) : '';
+  document.getElementById('personRoleInput').value = p.role||'';
+  document.getElementById('personDeleteBtn').style.display = index!=null ? '' : 'none';
+  updatePhoneValidBadge();
+  personDlg.showModal();
+}
+document.getElementById('personSaveBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('personNameInput').value.trim();
+  if (!name){ document.getElementById('personNameInput').focus(); return; }
+  const phone = currentPhoneDigits();
+  const role = document.getElementById('personRoleInput').value.trim();
+  const store = data.find(s=>s.mall===editingMall);
+  if (!store){ personDlg.close(); return; }
   const arr = store.staff.slice();
-  arr.push({name, phone});
-  saveStaffForMall(store.mall, arr);
-  nameEl.value=''; phoneEl.value='';
-  renderStaffList();
+  if (editingIndex!=null) arr[editingIndex] = {name, phone, role};
+  else arr.push({name, phone, role});
+  saveStaffForMall(editingMall, arr);
+  personDlg.close();
+  renderContacts();
+});
+document.getElementById('personDeleteBtn').addEventListener('click', ()=>{
+  const store = data.find(s=>s.mall===editingMall);
+  if (!store || editingIndex==null){ personDlg.close(); return; }
+  const removed = store.staff[editingIndex];
+  const removedAt = editingIndex, removedMall = editingMall;
+  const arr = store.staff.slice(); arr.splice(removedAt,1);
+  saveStaffForMall(removedMall, arr);
+  personDlg.close();
+  renderContacts();
+  showUndoSnack('Removed '+titleCase(removed.name), ()=>{
+    const cur = data.find(s=>s.mall===removedMall);
+    if (!cur) return;
+    const arr2 = cur.staff.slice(); arr2.splice(Math.min(removedAt, arr2.length), 0, removed);
+    saveStaffForMall(removedMall, arr2);
+    renderContacts();
+  });
+});
+document.getElementById('personCancelBtn').addEventListener('click', ()=>personDlg.close());
+
+// ---- store hours sheet ----
+const hoursDlg = document.getElementById('hoursDlg');
+let editingHoursMall = null;
+function openHoursEditor(mall){
+  editingHoursMall = mall;
+  document.getElementById('hoursDlgMall').textContent = mall;
+  const ct = closeTimesFor(mall);
+  document.getElementById('hoursMonThu').value = ct[0];
+  document.getElementById('hoursFri').value = ct[4];
+  document.getElementById('hoursSat').value = ct[5];
+  document.getElementById('hoursSun').value = ct[6];
+  hoursDlg.showModal();
+}
+function commitHours(){
+  if (!editingHoursMall) return;
+  const mt = document.getElementById('hoursMonThu').value || DEFAULT_CLOSE[0];
+  const fr = document.getElementById('hoursFri').value || DEFAULT_CLOSE[4];
+  const sa = document.getElementById('hoursSat').value || DEFAULT_CLOSE[5];
+  const su = document.getElementById('hoursSun').value || DEFAULT_CLOSE[6];
+  storeHours[editingHoursMall] = [mt,mt,mt,mt,fr,sa,su];
+  saveStoreHours(storeHours);
+  render(); renderContacts();
+  sendMutation({ type:'setHours', mall: editingHoursMall, hours: storeHours[editingHoursMall] });
+}
+['hoursMonThu','hoursFri','hoursSat','hoursSun'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', commitHours);
+});
+document.getElementById('hoursDoneBtn').addEventListener('click', ()=>hoursDlg.close());
+
+// ---- add / remove store ----
+const addStoreTile = document.getElementById('addStoreTile');
+const addStoreRow = document.getElementById('addStoreRow');
+addStoreTile.addEventListener('click', ()=>{
+  addStoreTile.style.display='none'; addStoreRow.style.display='flex';
+  document.getElementById('newStoreName').focus();
+});
+document.getElementById('cancelAddStoreBtn').addEventListener('click', ()=>{
+  document.getElementById('newStoreName').value='';
+  addStoreRow.style.display='none'; addStoreTile.style.display='flex';
 });
 document.getElementById('addStoreBtn').addEventListener('click', ()=>{
   const input = document.getElementById('newStoreName');
   const raw = input.value.trim();
-  if (!raw) { input.focus(); return; }
-  if (isIgnoredMall(raw)) { input.value=''; return; }
+  if (!raw){ input.focus(); return; }
+  if (isIgnoredMall(raw)){ input.value=''; return; }
   const mall = raw.toUpperCase().replace(/\s+/g,' ').trim();
   if (removedMalls.includes(mall)) { removedMalls = removedMalls.filter(m=>m!==mall); saveRemovedMalls(removedMalls); }
   if (!data.some(s=>s.mall===mall)) {
@@ -734,19 +1223,15 @@ document.getElementById('addStoreBtn').addEventListener('click', ()=>{
     if (!lyStore[mall]) { lyStore[mall]=DAY_KEYS.map(()=>0); saveLy(lyStore); }
     if (!lyAov[mall]) { lyAov[mall]=DAY_KEYS.map(()=>0); saveAov(lyAov); }
   }
-  input.value='';
-  renderStoreSelect();
-  staffStoreSelect.value = encodeURIComponent(mall);
-  renderStaffList();
-  render();
+  input.value=''; addStoreRow.style.display='none'; addStoreTile.style.display='flex';
+  render(); renderContacts();
 });
-document.getElementById('removeStoreBtn').addEventListener('click', ()=>{
-  const store = currentStaffStore();
+function removeStore(mall){
+  const store = data.find(s=>s.mall===mall);
   if (!store) return;
   const staffCount = store.staff.length;
   const warn = staffCount ? ' It has '+staffCount+' staff member'+(staffCount===1?'':'s')+' on file — they\'ll be removed too.' : '';
-  if (!confirm('Remove '+store.mall+' from the district?'+warn)) return;
-  const mall = store.mall;
+  if (!confirm('Remove '+mall+' from the district?'+warn)) return;
   data.splice(data.indexOf(store), 1);
   if (!removedMalls.includes(mall)) { removedMalls.push(mall); saveRemovedMalls(removedMalls); }
   extraMalls = extraMalls.filter(m=>m!==mall); saveExtraMalls(extraMalls);
@@ -754,18 +1239,94 @@ document.getElementById('removeStoreBtn').addEventListener('click', ()=>{
   delete lyAov[mall]; saveAov(lyAov);
   delete todaySales[mall]; saveToday(todaySales);
   delete staffOverrides[mall]; saveStaffOverrides(staffOverrides);
-  renderStoreSelect();
-  renderStaffList();
-  render();
+  delete storeHours[mall]; saveStoreHours(storeHours);
+  render(); renderContacts();
+  sendMutation({ type:'deleteStore', mall });
+}
+
+// ---- undo snackbar ----
+let undoTimer = null;
+function showUndoSnack(text, onUndo){
+  clearTimeout(undoTimer);
+  const el = document.getElementById('undoSnack');
+  el.innerHTML = '<span>'+text+'</span><button id="undoBtn">Undo</button>';
+  el.className = 'undosnack show';
+  document.getElementById('undoBtn').addEventListener('click', ()=>{
+    onUndo();
+    el.className = 'undosnack';
+    clearTimeout(undoTimer);
+  });
+  undoTimer = setTimeout(()=>{ el.className = 'undosnack'; }, 5000);
+}
+renderContacts();
+
+// ---- today tab: shared checklist + live sales-vs-goal overview ----
+function updateMyNameLabel(){ document.getElementById('myNameLabel').textContent = myName || 'not set'; }
+const nameDlg = document.getElementById('nameDlg');
+function openNameDlg(){ document.getElementById('myNameInput').value = myName; nameDlg.showModal(); }
+document.getElementById('myNameSaveBtn').addEventListener('click', ()=>{
+  const v = document.getElementById('myNameInput').value.trim();
+  if (!v) { document.getElementById('myNameInput').focus(); return; }
+  myName = v;
+  localStorage.setItem(MY_NAME_KEY, myName);
+  updateMyNameLabel();
+  nameDlg.close();
 });
-renderStoreSelect();
-renderStaffList();
+document.getElementById('changeNameLink').addEventListener('click', e=>{ e.preventDefault(); openNameDlg(); });
+
+const taskListEl = document.getElementById('taskList');
+function renderToday(){
+  taskListEl.innerHTML = '';
+  for (const def of TASK_DEFS){
+    const t = teamTasks[def.key] || {done:false,by:null,at:null};
+    const row = document.createElement('div'); row.className = 'taskrow'+(t.done?' done':'');
+    const timeStr = t.at ? new Date(t.at).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}) : '';
+    row.innerHTML = '<div class="taskcbx">'+(t.done?'✓':'')+'</div>'+
+      '<div class="taskinfo"><div class="tasklabel">'+def.label+'</div>'+
+      (t.done ? '<div class="tasksub">Done by '+titleCase(t.by||'someone')+' · '+timeStr+'</div>' : '<div class="tasksub">Not done yet</div>')+
+      '</div>';
+    row.addEventListener('click', ()=>setTask(def.key, !t.done));
+    taskListEl.appendChild(row);
+  }
+  renderTodayOverview();
+}
+function renderTodayOverview(){
+  const el = document.getElementById('todayOverviewList');
+  el.innerHTML = '';
+  for (const s of data){
+    const info = goalInfo(s.mall);
+    const sold = Number(todaySales[s.mall])||0;
+    const row = document.createElement('div'); row.className = 'ovrow';
+    row.innerHTML = '<div class="ovname">'+s.mall+'</div>'+
+      '<div class="ovnum'+(info.hit?' hit':'')+'">$'+sold.toLocaleString()+' — '+(info.hit?'hit ✓':'$'+info.goal.toLocaleString()+' to go')+'</div>';
+    el.appendChild(row);
+  }
+}
+
+// ---- cross-device sync boot (dormant until firebase-sync/SETUP.md is followed) ----
+function updateTeamSyncBadge(){
+  const el = document.getElementById('teamSyncBadge');
+  if (!el) return;
+  if (!window.districtSync || !window.districtSync.configured) { el.textContent=''; el.className='syncbadge'; return; }
+  el.textContent = 'Live with team ✓'; el.className = 'syncbadge synced';
+}
+function bootDistrictSync(){
+  updateTeamSyncBadge();
+  if (!window.districtSync || !window.districtSync.configured) return;
+  window.districtSync.onDay(todayDateStr, cloudData=>{
+    if (!cloudData) return;
+    if (cloudData.todaySales){ Object.assign(todaySales, cloudData.todaySales); saveToday(todaySales); render(); }
+    if (cloudData.tasks){ teamTasks = Object.assign(defaultTasks(), cloudData.tasks); saveTasksLocal(teamTasks); renderToday(); }
+  });
+}
+if (window.districtSync) bootDistrictSync();
+else window.addEventListener('districtsync-ready', bootDistrictSync, {once:true});
 
 // ---- send queue ----
 function statDropBlock(info){
   let lines = ['📊 Stat Drop', 'LY total sales: $'+info.ly.toLocaleString()];
   if (info.aov) lines.push('LY average order: $'+info.aov.toLocaleString());
-  lines.push('Amt/hr to beat: $'+info.perHour.toLocaleString()+' ('+info.hours+'hrs)');
+  lines.push('Amt/hr to beat: $'+info.perHour.toLocaleString()+' ('+fmtHours(info.hours)+'hrs left)');
   return lines.join('\n');
 }
 document.getElementById('go').onclick=()=>{
@@ -790,10 +1351,20 @@ document.getElementById('go').onclick=()=>{
     q.appendChild(row);
   }}
   document.getElementById('dlg').showModal();
+  let autoTaskKey = null;
+  if (mode==='openers') autoTaskKey='openers';
+  else if (mode==='closers') autoTaskKey='closers';
+  else if (mode==='lowsales'){
+    const th = Number(lowTemplate.threshold);
+    if (th===100) autoTaskKey='low1pm'; else if (th===300) autoTaskKey='low5pm';
+  }
+  if (autoTaskKey) setTask(autoTaskKey, true);
 };
 document.getElementById('close').onclick=()=>document.getElementById('dlg').close();
 
-render(); updateCount(); syncDockPadding();
+render(); updateCount(); syncDockPadding(); updateSyncBadge();
+pullFromSheet(true);
+flushSyncQueue();
 
 // ---- auto-update check: catches everyone up without any manual cache-clearing ----
 async function checkForUpdate(){
@@ -813,7 +1384,9 @@ async function checkForUpdate(){
   } catch(e) {}
 }
 checkForUpdate();
-document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='visible') checkForUpdate(); });
+document.addEventListener('visibilitychange', ()=>{
+  if (document.visibilityState==='visible') { checkForUpdate(); pullFromSheet(true); flushSyncQueue(); }
+});
 </script>
 </body>
 </html>
