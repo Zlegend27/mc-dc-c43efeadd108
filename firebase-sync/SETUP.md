@@ -39,10 +39,17 @@ exactly this. Takes about 10 minutes, done once.
        match /days/{dateId} {
          allow read, write: if request.auth != null;
        }
+       match /roster/{docId} {
+         allow read, write: if request.auth != null;
+       }
      }
    }
    ```
 3. Click **Publish**.
+
+   (If you already set this up before contacts moved to Firestore, you likely only have
+   the `days` block — add the `roster` block too and re-publish, or nothing involving
+   staff/contacts will sync.)
 
 ## 5. Get your app's connection details
 
@@ -66,10 +73,26 @@ exactly this. Takes about 10 minutes, done once.
 
 ## What this does and doesn't do
 
-- Only the app's own "today's sales" and "today's checklist" data lives here — nothing
-  about staff, phone numbers, or store info goes into this database.
+- Today's sales, the shared checklist, **and the staff contact roster** (names, phone
+  numbers) all live here now — moved out of the app's public source file specifically so
+  real staff phone numbers aren't sitting in plain text in the public GitHub repo anymore.
 - Nobody needs an account, a password, or to sign into anything — the app handles it
   silently in the background.
 - If this is ever misconfigured or you want to turn sync off, just clear the six values
   back to blank — every device goes back to working entirely on its own, exactly like
-  before this feature existed.
+  before this feature existed. Note that turning it off doesn't bring the roster back
+  into the public file automatically — talk to whoever set this up before turning it off
+  if the team is actively relying on it.
+
+## The honest limit of this setup
+
+"Anonymous sign-in" means anyone who opens the app automatically satisfies the security
+rule above — it's not the same as a real login tied to a specific person. In practice
+that means: someone who finds your app's link, or copies its public Firebase connection
+details out of the page source, could open the app (or a copy of it) and read or edit
+this same data, the same way your team does. It's a real step up from the old setup
+(the phone numbers no longer show up just from browsing the GitHub repo or its history),
+but it isn't the same as data locked to only your team's named accounts. For a small
+trusted team on an unlisted link, this is a reasonable trade-off — if you ever want
+stronger protection (a real login screen, one account per person), that's a bigger
+follow-up project, not a quick setting to flip.
