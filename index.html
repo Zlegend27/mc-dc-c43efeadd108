@@ -454,7 +454,7 @@ const FIREBASE_CONFIG = {
 };
 
 function makeStub(){
-  return { configured:false, onDay(){ return ()=>{}; }, setSales(){}, setTask(){} };
+  return { configured:false, onDay(){ return ()=>{}; }, setSales(){}, setTask(){}, onRoster(){ return ()=>{}; }, setRoster(){} };
 }
 
 if (!FIREBASE_CONFIG.projectId) {
@@ -489,6 +489,21 @@ if (!FIREBASE_CONFIG.projectId) {
         await ready;
         const ref = doc(db, 'days', dateKey);
         await setDoc(ref, { tasks: { [taskKey]: { done, by, at: Date.now() } } }, { merge:true }).catch(err=>console.error('districtSync setTask failed', err));
+      },
+      onRoster(cb, onError){
+        const ref = doc(db, 'roster', 'current');
+        return onSnapshot(ref, snap=>cb(snap.exists() ? (snap.data().stores||[]) : []), err=>{
+          console.error('districtSync roster listen failed', err);
+          if (onError) onError(err);
+        });
+      },
+      async setRoster(stores){
+        await ready;
+        const ref = doc(db, 'roster', 'current');
+        // Firestore treats arrays as one atomic value — there's no partial-merge for a single
+        // element, so every roster edit writes the whole current stores array. Fine at this
+        // size (a few dozen KB at most).
+        await setDoc(ref, { stores }, { merge:false }).catch(err=>console.error('districtSync setRoster failed', err));
       }
     };
     await ready;
@@ -503,7 +518,12 @@ if (!FIREBASE_CONFIG.projectId) {
 
 <script>
 window.__BUILD__ = "2026-07-23T00:00:00.000Z";
-window.__DATA__ = [{"mall":"ARUNDEL MILLS STORE","goal":546,"staff":[{"name":"JAMIE GRIFFIN","phone":"14435917052"},{"name":"Kaiya Jackson","phone":"14432026437"},{"name":"ARIELLE MABREY","phone":"16672891642"},{"name":"Ebun Omotayo- Benson","phone":"12402640499"}]},{"mall":"CAROLINA PLACE","goal":54,"staff":[{"name":"Evelyn \"Evie\" Stewart","phone":"17049898319"},{"name":"Ah'venique Francis","phone":"17047722068"},{"name":"ALYSON AVERETTE","phone":"19843036629"}]},{"mall":"CASTLETON SQUARE","goal":411,"staff":[{"name":"SHARRECE FRYE","phone":"18125815225"},{"name":"Tainesha Lovett","phone":"17737339819"},{"name":"JYLIAN WALKER","phone":"14632689089"}]},{"mall":"GALLERIA FORT LAUDERDALE","goal":926,"staff":[{"name":"MARBELLA MARTINEZ","phone":"19545341237"},{"name":"Michelle Richardson","phone":"15616058156"},{"name":"MOLLY OATES","phone":"9548509334"},{"name":"Beatrice Piludu","phone":"17868930250"}]},{"mall":"GURNEE MILLS","goal":533,"staff":[{"name":"AURORA  AREVALO","phone":"12244408645"},{"name":"LINDSEY CARREON","phone":"12247629820"},{"name":"GWEN MOORE","phone":"17086031480"}]},{"mall":"KING OF PRUSSIA STORE","goal":624,"staff":[{"name":"DIANA BRAVO","phone":"12157911467"},{"name":"ALAYNE MCPHAIL","phone":"12159770389"},{"name":"DAYONNA THOMAS","phone":"12679167479"}]},{"mall":"ORLAND SQUARE","goal":1391,"staff":[{"name":"ZAID HAMMAD","phone":"17084657040"},{"name":"MARLY RAMIREZ","phone":"17085004426"},{"name":"DANA THAHER","phone":"17088566583"},{"name":"Corinne Veles","phone":"17087380644"}]},{"mall":"PALISADES STORE","goal":226,"staff":[{"name":"Briana Giovinazzo","phone":"18457094015"},{"name":"Sheyli Lemus","phone":"18454059525"},{"name":"Pricsilla Diaz","phone":"19144341822"}]},{"mall":"SOMERSET COLLECTIONS","goal":2001,"staff":[{"name":"Ariande Quates","phone":"12483467265"},{"name":"Ashley Sussani","phone":"12489855873"},{"name":"Desiree Strickland","phone":"15862784678"}]},{"mall":"TOWSON SQUARE STORE","goal":509,"staff":[{"name":"CADANCE MOYANO","phone":"14436767882"},{"name":"Skiya Godwin","phone":"19102803915"},{"name":"Dominic Link","phone":"16673048193"}]},{"mall":"TREASURE COAST","goal":219,"staff":[{"name":"SHAR WEISENBERG","phone":"14357494025"},{"name":"STEPHANIE MARQUES","phone":"16034043311"},{"name":"LINDSEY JEAN-LEWIS","phone":"15613792735"},{"name":"HANTZ ETIENNE","phone":"17863821658"}]},{"mall":"UTC","goal":0,"staff":[{"name":"Skye Samuel","phone":"19419613178"},{"name":"Sharon Wortman","phone":"19419621888"},{"name":"Briana Damas-Mendez","phone":"19292313400"},{"name":"Andrea Morales","phone":"17604097923"}]},{"mall":"WALDEN GALLERIA","goal":515,"staff":[{"name":"Amani Watson","phone":"17164655019"},{"name":"Lalia Mostiller","phone":"17168301222"},{"name":"Hajer Yahya","phone":"17164957793"}]},{"mall":"WOODFIELD STORE","goal":1105,"staff":[{"name":"JASMIN MUNOZ","phone":"16304400828"},{"name":"Marcella Krukowski","phone":"13126132669"},{"name":"VICTORIA GONZALEZ","phone":"12246059074"},{"name":"Elena Bogan","phone":"12244282815"}]}];
+// Contacts (names/phones) no longer live here — this file is public (GitHub Pages), and
+// baking real staff phone numbers into a public page was a real privacy exposure. The
+// roster now lives in Firestore (see firebase-sync/SETUP.md) and loads at runtime, with a
+// per-device local cache so the Send tab isn't empty for a moment on load. Goals (LY
+// reference numbers, not PII) still ship here as sane defaults for a brand-new roster.
+window.__DATA__ = [{"mall":"ARUNDEL MILLS STORE","goal":546,"staff":[]},{"mall":"CAROLINA PLACE","goal":54,"staff":[]},{"mall":"CASTLETON SQUARE","goal":411,"staff":[]},{"mall":"GALLERIA FORT LAUDERDALE","goal":926,"staff":[]},{"mall":"GURNEE MILLS","goal":533,"staff":[]},{"mall":"KING OF PRUSSIA STORE","goal":624,"staff":[]},{"mall":"ORLAND SQUARE","goal":1391,"staff":[]},{"mall":"PALISADES STORE","goal":226,"staff":[]},{"mall":"SOMERSET COLLECTIONS","goal":2001,"staff":[]},{"mall":"TOWSON SQUARE STORE","goal":509,"staff":[]},{"mall":"TREASURE COAST","goal":219,"staff":[]},{"mall":"UTC","goal":0,"staff":[]},{"mall":"WALDEN GALLERIA","goal":515,"staff":[]},{"mall":"WOODFIELD STORE","goal":1105,"staff":[]}];
 window.__TEMPLATES__ = {"monthu":{"floor":400,"msg":"Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?"},"frisun":{"floor":700,"msg":"Hey {name}! 🎉 Happy {day}! Let's keep that energy up today😍 We only need ${amount} to beat LY — very doable with a couple solid bundles! Text me the code word for today's morning message so I know you're locked in, and what sales goal do you write to hit bonus tonight?"},"sat":{"floor":900,"msg":"Hey {name}! 🥳 It's Sales Saturday — our biggest day of the week, let's make it count! We only need ${amount} to beat LY. Focus on sales only today! Text me the code word for today's morning message so I know you're ready, and what sales goal do you write to hit bonus tonight?"}};
 window.__LOWTEMPLATE__ = {"threshold":100,"msg":"Hey {name}! ☺️ Just checking in to be sure you saw the big bonuses up for grabs today😍 Currently we are a little behind where we need to be to reach last year's numbers, but I know we can hit it with just a couple big bundles! We only need ${amount} to beat LY! Text me the code word for today's morning message so I know you are ready to end the day strong, and what sales goal do you write to hit bonus tonight?"};
 const data = window.__DATA__;
@@ -520,23 +540,18 @@ for (const m of extraMalls) { if (!data.some(s=>s.mall===m)) data.push({mall:m, 
 // Clean up any ignored-mall data left over from before this fix shipped.
 for (let i=data.length-1;i>=0;i--) if (isIgnoredMall(data[i].mall)) data.splice(i,1);
 
-// ---- stores the user has deliberately removed (persists across reloads and future re-builds) ----
-const REMOVED_KEY='districtTexter.removedStores.v1';
-function loadRemovedMalls(){ try{ return JSON.parse(localStorage.getItem(REMOVED_KEY))||[]; }catch{ return []; } }
-function saveRemovedMalls(list){ localStorage.setItem(REMOVED_KEY, JSON.stringify(list)); }
-let removedMalls = loadRemovedMalls();
-for (let i=data.length-1;i>=0;i--) if (removedMalls.includes(data[i].mall)) data.splice(i,1);
-
-// ---- manual staff edits (persisted; a full staff-array replacement per store) ----
-const STAFF_KEY='districtTexter.staffOverrides.v1';
-function loadStaffOverrides(){ try{ return JSON.parse(localStorage.getItem(STAFF_KEY))||{}; }catch{ return {}; } }
-function saveStaffOverrides(o){ localStorage.setItem(STAFF_KEY, JSON.stringify(o)); }
-let staffOverrides = loadStaffOverrides();
-for (const mall in staffOverrides) {
-  if (isIgnoredMall(mall)) continue;
-  let store = data.find(s=>s.mall===mall);
-  if (!store) { store = {mall, staff:[]}; data.push(store); }
-  store.staff = staffOverrides[mall];
+// ---- staff roster (names/phones) — lives in Firestore now, not in this public file.
+// The cache below is per-device localStorage (never committed to the repo), used only so
+// the Send tab shows real data immediately instead of flashing empty while the live
+// listener connects. The live listener (wired up further down, near districtSync) always
+// wins once it reports in. ----
+const ROSTER_CACHE_KEY='districtTexter.rosterCache.v1';
+function loadRosterCache(){ try{ return JSON.parse(localStorage.getItem(ROSTER_CACHE_KEY)); }catch{ return null; } }
+function saveRosterCache(stores){ localStorage.setItem(ROSTER_CACHE_KEY, JSON.stringify(stores)); }
+const rosterCache = loadRosterCache();
+if (rosterCache && rosterCache.length){
+  data.length = 0;
+  for (const s of rosterCache) if (!isIgnoredMall(s.mall)) data.push(s);
 }
 
 const list = document.getElementById('list');
@@ -595,100 +610,6 @@ function hoursLeftFor(mall){
   return Math.max(0.5, (ch+cm/60) - nowDec);
 }
 function fmtHours(h){ const r=Math.round(h*10)/10; return (r%1===0) ? r+'.0' : r; }
-
-// ---- Google Sheet sync (contacts + store hours) ----
-// SHEETS_ENDPOINT/SHEETS_KEY come from deploying google-sheets-sync/Code.gs as an Apps
-// Script Web App (see google-sheets-sync/SETUP.md). Left blank, the app works exactly as
-// before, purely on the baked-in roster + local edits — sync is entirely additive.
-const SHEETS_ENDPOINT = '';
-const SHEETS_KEY = '';
-const SYNC_CACHE_KEY = 'districtTexter.sheetCache.v1';
-const SYNC_QUEUE_KEY = 'districtTexter.syncQueue.v1';
-let syncStatus = SHEETS_ENDPOINT ? 'idle' : 'unconfigured';
-function loadSyncCache(){ try{ return JSON.parse(localStorage.getItem(SYNC_CACHE_KEY))||null; }catch{ return null; } }
-function saveSyncCache(c){ localStorage.setItem(SYNC_CACHE_KEY, JSON.stringify(c)); }
-function loadSyncQueue(){ try{ return JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY))||[]; }catch{ return []; } }
-function saveSyncQueue(q){ localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(q)); }
-let syncQueue = loadSyncQueue();
-function updateSyncBadge(){
-  const el = document.getElementById('syncBadge');
-  if (!el) return;
-  const map = {
-    idle:['',''], syncing:['syncing','Syncing…'], synced:['synced','Synced ✓'],
-    offline:['offline','Offline — will sync'], unconfigured:['',''], error:['offline','Sync error']
-  };
-  const [cls,text] = map[syncStatus] || ['',''];
-  el.className = 'syncbadge '+cls;
-  el.textContent = text;
-}
-function applyContactsFromSheet(contactsArr){
-  // The sheet becomes the source of truth for the roster. Local stores added (e.g. via
-  // Contacts > + Add store) but not yet synced are kept in view via extraMalls until
-  // their first successful push lands them in the sheet too.
-  data.length = 0;
-  for (const store of contactsArr){
-    if (isIgnoredMall(store.mall) || removedMalls.includes(store.mall)) continue;
-    data.push({ mall: store.mall, staff: (store.staff||[]).map(p=>({name:p.name, phone:p.phone, role:p.role||''})) });
-  }
-  for (const m of extraMalls) if (!data.some(s=>s.mall===m)) data.push({mall:m, staff:[]});
-  for (const s of data){
-    if (!lyStore[s.mall]) lyStore[s.mall]=DAY_KEYS.map(()=>0);
-    if (!lyAov[s.mall]) lyAov[s.mall]=DAY_KEYS.map(()=>0);
-  }
-  saveLy(lyStore); saveAov(lyAov);
-}
-function applyHoursFromSheet(hoursObj){
-  storeHours = hoursObj || {};
-  saveStoreHours(storeHours);
-}
-async function pullFromSheet(refreshUi){
-  if (!SHEETS_ENDPOINT) return;
-  syncStatus = 'syncing'; updateSyncBadge();
-  try{
-    const [cRes,hRes] = await Promise.all([
-      fetch(SHEETS_ENDPOINT+'?action=contacts', {cache:'no-store'}),
-      fetch(SHEETS_ENDPOINT+'?action=hours', {cache:'no-store'})
-    ]);
-    const cJson = await cRes.json(), hJson = await hRes.json();
-    if (!cJson.ok || !hJson.ok) throw new Error('bad response');
-    applyContactsFromSheet(cJson.data);
-    applyHoursFromSheet(hJson.data);
-    saveSyncCache({ contacts:cJson.data, hours:hJson.data, at:Date.now() });
-    syncStatus = 'synced';
-    if (refreshUi){ render(); renderContacts(); }
-  }catch(err){ syncStatus='offline'; }
-  updateSyncBadge();
-}
-async function sendMutation(payload){
-  if (!SHEETS_ENDPOINT) return; // sync not configured — local-only, same as before this feature shipped
-  try{
-    const res = await fetch(SHEETS_ENDPOINT, { method:'POST', body: JSON.stringify(Object.assign({key:SHEETS_KEY}, payload)) });
-    const json = await res.json();
-    if (!json.ok) throw new Error(json.error||'sync failed');
-    syncStatus = 'synced';
-  }catch(err){
-    syncQueue.push(payload); saveSyncQueue(syncQueue);
-    syncStatus = 'offline';
-  }
-  updateSyncBadge();
-}
-async function flushSyncQueue(){
-  if (!SHEETS_ENDPOINT || !syncQueue.length) return;
-  const remaining = [];
-  for (const payload of syncQueue){
-    try{
-      const res = await fetch(SHEETS_ENDPOINT, { method:'POST', body: JSON.stringify(Object.assign({key:SHEETS_KEY}, payload)) });
-      const json = await res.json();
-      if (!json.ok) throw new Error();
-    }catch(err){ remaining.push(payload); }
-  }
-  syncQueue = remaining; saveSyncQueue(syncQueue);
-  syncStatus = remaining.length ? 'offline' : 'synced';
-  updateSyncBadge();
-}
-window.addEventListener('online', flushSyncQueue);
-const cachedSheet = loadSyncCache();
-if (cachedSheet){ applyContactsFromSheet(cachedSheet.contacts); applyHoursFromSheet(cachedSheet.hours); }
 
 // ---- today's actual sales (persisted per calendar day; resets automatically each new day) ----
 const TODAY_KEY='districtTexter.today.'+todayDateStr;
@@ -813,7 +734,6 @@ document.getElementById('applyPaste').addEventListener('click', ()=>{
     const loc = (r[idx.loc]||'').trim();
     if (!loc) continue;
     if (isIgnoredMall(loc)) { ignored++; continue; }
-    if (removedMalls.includes(loc.toUpperCase().replace(/\s+/g,' ').trim()) && !canonMall(loc)) { ignored++; continue; }
     let mall = canonMall(loc);
     if (!mall) {
       // Store not in the Staff Contact sheet yet (e.g. a newly opened mall) — still capture
@@ -1027,12 +947,11 @@ loadLowEditor();
 
 // ---- contacts tab: search + card list + tap-to-edit sheets ----
 function saveStaffForMall(mall, staffArr){
-  staffOverrides[mall] = staffArr;
-  saveStaffOverrides(staffOverrides);
   const store = data.find(s=>s.mall===mall);
   if (store) store.staff = staffArr;
+  saveRosterCache(data);
   render();
-  sendMutation({ type:'setStaff', mall, staff: staffArr });
+  if (window.districtSync && window.districtSync.configured) window.districtSync.setRoster(data);
 }
 function fmtTimeLabel(t){
   const parts = String(t||'20:00').split(':').map(Number);
@@ -1192,7 +1111,6 @@ function commitHours(){
   storeHours[editingHoursMall] = [mt,mt,mt,mt,fr,sa,su];
   saveStoreHours(storeHours);
   render(); renderContacts();
-  sendMutation({ type:'setHours', mall: editingHoursMall, hours: storeHours[editingHoursMall] });
 }
 ['hoursMonThu','hoursFri','hoursSat','hoursSun'].forEach(id=>{
   document.getElementById(id).addEventListener('change', commitHours);
@@ -1216,12 +1134,13 @@ document.getElementById('addStoreBtn').addEventListener('click', ()=>{
   if (!raw){ input.focus(); return; }
   if (isIgnoredMall(raw)){ input.value=''; return; }
   const mall = raw.toUpperCase().replace(/\s+/g,' ').trim();
-  if (removedMalls.includes(mall)) { removedMalls = removedMalls.filter(m=>m!==mall); saveRemovedMalls(removedMalls); }
   if (!data.some(s=>s.mall===mall)) {
     data.push({mall, staff:[]});
     if (!extraMalls.includes(mall)) { extraMalls.push(mall); saveExtraMalls(extraMalls); }
     if (!lyStore[mall]) { lyStore[mall]=DAY_KEYS.map(()=>0); saveLy(lyStore); }
     if (!lyAov[mall]) { lyAov[mall]=DAY_KEYS.map(()=>0); saveAov(lyAov); }
+    saveRosterCache(data);
+    if (window.districtSync && window.districtSync.configured) window.districtSync.setRoster(data);
   }
   input.value=''; addStoreRow.style.display='none'; addStoreTile.style.display='flex';
   render(); renderContacts();
@@ -1233,15 +1152,14 @@ function removeStore(mall){
   const warn = staffCount ? ' It has '+staffCount+' staff member'+(staffCount===1?'':'s')+' on file — they\'ll be removed too.' : '';
   if (!confirm('Remove '+mall+' from the district?'+warn)) return;
   data.splice(data.indexOf(store), 1);
-  if (!removedMalls.includes(mall)) { removedMalls.push(mall); saveRemovedMalls(removedMalls); }
   extraMalls = extraMalls.filter(m=>m!==mall); saveExtraMalls(extraMalls);
   delete lyStore[mall]; saveLy(lyStore);
   delete lyAov[mall]; saveAov(lyAov);
   delete todaySales[mall]; saveToday(todaySales);
-  delete staffOverrides[mall]; saveStaffOverrides(staffOverrides);
   delete storeHours[mall]; saveStoreHours(storeHours);
+  saveRosterCache(data);
   render(); renderContacts();
-  sendMutation({ type:'deleteStore', mall });
+  if (window.districtSync && window.districtSync.configured) window.districtSync.setRoster(data);
 }
 
 // ---- undo snackbar ----
@@ -1304,11 +1222,30 @@ function renderTodayOverview(){
 }
 
 // ---- cross-device sync boot (dormant until firebase-sync/SETUP.md is followed) ----
+let rosterSyncFailed = false;
 function updateTeamSyncBadge(){
-  const el = document.getElementById('teamSyncBadge');
-  if (!el) return;
-  if (!window.districtSync || !window.districtSync.configured) { el.textContent=''; el.className='syncbadge'; return; }
-  el.textContent = 'Live with team ✓'; el.className = 'syncbadge synced';
+  const configured = window.districtSync && window.districtSync.configured;
+  const dayEl = document.getElementById('teamSyncBadge');
+  if (dayEl){ dayEl.textContent = configured ? 'Live with team ✓' : ''; dayEl.className = 'syncbadge'+(configured?' synced':''); }
+  // Contacts gets its own badge state — the days/ collection can be synced fine while the
+  // roster/ collection is still denied by Firestore rules (a real gap this caught once).
+  const rosterEl = document.getElementById('syncBadge');
+  if (rosterEl){
+    if (!configured){ rosterEl.textContent=''; rosterEl.className='syncbadge'; }
+    else if (rosterSyncFailed){ rosterEl.textContent='Not synced'; rosterEl.className='syncbadge offline'; }
+    else { rosterEl.textContent='Live with team ✓'; rosterEl.className='syncbadge synced'; }
+  }
+}
+function applyRosterFromCloud(stores){
+  data.length = 0;
+  for (const s of (stores||[])) if (!isIgnoredMall(s.mall)) data.push(s);
+  for (const m of extraMalls) if (!data.some(s=>s.mall===m)) data.push({mall:m, staff:[]});
+  for (const s of data){
+    if (!lyStore[s.mall]) lyStore[s.mall]=DAY_KEYS.map(()=>0);
+    if (!lyAov[s.mall]) lyAov[s.mall]=DAY_KEYS.map(()=>0);
+  }
+  saveLy(lyStore); saveAov(lyAov);
+  saveRosterCache(data);
 }
 function bootDistrictSync(){
   updateTeamSyncBadge();
@@ -1318,6 +1255,10 @@ function bootDistrictSync(){
     if (cloudData.todaySales){ Object.assign(todaySales, cloudData.todaySales); saveToday(todaySales); render(); }
     if (cloudData.tasks){ teamTasks = Object.assign(defaultTasks(), cloudData.tasks); saveTasksLocal(teamTasks); renderToday(); }
   });
+  window.districtSync.onRoster(stores=>{
+    applyRosterFromCloud(stores);
+    render(); renderContacts();
+  }, err=>{ rosterSyncFailed = true; updateTeamSyncBadge(); });
 }
 if (window.districtSync) bootDistrictSync();
 else window.addEventListener('districtsync-ready', bootDistrictSync, {once:true});
@@ -1362,9 +1303,7 @@ document.getElementById('go').onclick=()=>{
 };
 document.getElementById('close').onclick=()=>document.getElementById('dlg').close();
 
-render(); updateCount(); syncDockPadding(); updateSyncBadge();
-pullFromSheet(true);
-flushSyncQueue();
+render(); updateCount(); syncDockPadding();
 
 // ---- auto-update check: catches everyone up without any manual cache-clearing ----
 async function checkForUpdate(){
@@ -1385,7 +1324,7 @@ async function checkForUpdate(){
 }
 checkForUpdate();
 document.addEventListener('visibilitychange', ()=>{
-  if (document.visibilityState==='visible') { checkForUpdate(); pullFromSheet(true); flushSyncQueue(); }
+  if (document.visibilityState==='visible') checkForUpdate();
 });
 </script>
 </body>
