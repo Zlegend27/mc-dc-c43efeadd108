@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>District Texter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="District Texter">
@@ -17,23 +20,27 @@
 
 <style>
 :root{
-  --paper:#f5f2ef; --card:#ffffff; --line:#e7e1db; --ink:#1a1a1d; --sub:#706c77;
-  --accent:#cf2a42; --accent-ink:#ffffff; --accent-soft:#fbe4e6;
-  --ok:#1f9d5a; --ok-soft:#e1f6e8; --warn:#9c5e08; --warn-soft:#fdedd3;
-  --chip:#efe9e2; --shadow: 0 1px 2px rgba(20,16,12,.06), 0 6px 16px rgba(20,16,12,.05);
+  --paper:#f2efe5; --card:#fbfaf6; --line:#ded9cd; --ink:#30281e; --sub:#756c5b;
+  --accent:#756548; --accent-ink:#fbfaf6; --accent-soft:#f0e7d3;
+  --ok:#407353; --ok-soft:#d9eede; --warn:#8b6327; --warn-soft:#f9eaca;
+  --danger:#994c41; --danger-soft:#fbe1dc;
+  --chip:#e7e3d7; --shadow: 0 1px 2px rgba(48,40,30,.07), 0 6px 16px rgba(48,40,30,.06);
 }
 @media (prefers-color-scheme: dark){
-  :root{ --paper:#111113; --card:#1b1b1e; --line:#2b2a2e; --ink:#f2f0ee; --sub:#9b98a1;
-    --accent:#ef4a5f; --accent-ink:#1a0507; --accent-soft:#3a1418;
-    --ok:#37c977; --ok-soft:#123322; --warn:#f0a730; --warn-soft:#3a2a10; --chip:#252428;
+  :root{ --paper:#110c07; --card:#1d1710; --line:#393227; --ink:#ebe7df; --sub:#9f9789;
+    --accent:#bba16e; --accent-ink:#171008; --accent-soft:#342607;
+    --ok:#69a980; --ok-soft:#072c15; --warn:#cd9a50; --warn-soft:#3b2400;
+    --danger:#d37d6f; --danger-soft:#421c18;
+    --chip:#2b251d;
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 20px rgba(0,0,0,.35); }
 }
-:root[data-theme="light"]{ --paper:#f5f2ef; --card:#ffffff; --line:#e7e1db; --ink:#1a1a1d; --sub:#706c77; --accent:#cf2a42; --accent-ink:#ffffff; --accent-soft:#fbe4e6; --ok:#1f9d5a; --ok-soft:#e1f6e8; --warn:#9c5e08; --warn-soft:#fdedd3; --chip:#efe9e2; }
-:root[data-theme="dark"]{ --paper:#111113; --card:#1b1b1e; --line:#2b2a2e; --ink:#f2f0ee; --sub:#9b98a1; --accent:#ef4a5f; --accent-ink:#1a0507; --accent-soft:#3a1418; --ok:#37c977; --ok-soft:#123322; --warn:#f0a730; --warn-soft:#3a2a10; --chip:#252428; }
+:root[data-theme="light"]{ --paper:#f2efe5; --card:#fbfaf6; --line:#ded9cd; --ink:#30281e; --sub:#756c5b; --accent:#756548; --accent-ink:#fbfaf6; --accent-soft:#f0e7d3; --ok:#407353; --ok-soft:#d9eede; --warn:#8b6327; --warn-soft:#f9eaca; --danger:#994c41; --danger-soft:#fbe1dc; --chip:#e7e3d7; }
+:root[data-theme="dark"]{ --paper:#110c07; --card:#1d1710; --line:#393227; --ink:#ebe7df; --sub:#9f9789; --accent:#bba16e; --accent-ink:#171008; --accent-soft:#342607; --ok:#69a980; --ok-soft:#072c15; --warn:#cd9a50; --warn-soft:#3b2400; --danger:#d37d6f; --danger-soft:#421c18; --chip:#2b251d; }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;font:16px/1.42 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;background:var(--paper);color:var(--ink);padding-bottom:140px}
+body{margin:0;font:16px/1.42 'Inter',-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;background:var(--paper);color:var(--ink);padding-bottom:140px}
+h1,h2,h3{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600}
 @media (prefers-reduced-motion:no-preference){ .cbx,.goalpill,.person,.qrow,button,.seg button{transition:background-color .16s ease, color .16s ease, transform .12s ease, border-color .16s ease} }
 button{font-family:inherit}
 ::selection{background:var(--accent-soft)}
@@ -42,10 +49,29 @@ button{font-family:inherit}
 #updateBanner{position:sticky;top:0;z-index:8;background:var(--ok);color:#fff;padding:max(10px,env(safe-area-inset-top)) 14px 10px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700}
 #updateBanner button{margin-left:auto;background:rgba(255,255,255,.22);color:#fff;border:none;border-radius:8px;padding:8px 14px;font:inherit;font-weight:800;font-size:12.5px}
 header.app{position:sticky;top:0;z-index:5;background:var(--paper);padding:max(14px,env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--line)}
+#sendHeaderControls{display:none}
+header.app.on-send #sendHeaderControls{display:block}
 .brand{display:flex;align-items:baseline;gap:8px}
-.brand .mark{width:9px;height:9px;border-radius:2px;background:var(--accent);transform:rotate(45deg);flex:0 0 auto}
+.brand .mark{width:30px;height:30px;flex:0 0 auto;object-fit:contain}
 .brand h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.2px}
 .brand .day{margin-left:auto;font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--sub)}
+
+/* ---------- desktop sidebar (hidden until the md+ breakpoint) ---------- */
+.sidebar{display:none}
+.sidebarBrand{display:flex;flex-direction:column;align-items:center;gap:8px;padding:34px 20px 24px}
+.sidebarBrand img{width:60px;height:60px;object-fit:contain}
+.sidebarTitle{margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:21px;font-weight:600;color:var(--ink);text-align:center}
+.sidebarNav{display:flex;flex-direction:column;gap:3px;padding:0 14px;flex:1}
+.sidebarNav button{display:flex;align-items:center;gap:12px;border:none;background:transparent;border-radius:12px;padding:11px 14px;text-align:left;color:var(--sub);width:100%}
+.sidebarNav button .ic{font-size:18px;flex:0 0 auto}
+.sidebarNav button .navtext{display:flex;flex-direction:column;gap:1px;min-width:0}
+.sidebarNav button .navtext b{font-size:13.5px;font-weight:700;color:var(--ink)}
+.sidebarNav button .navtext small{font-size:11px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebarNav button.on{background:var(--accent-soft)}
+.sidebarFoot{padding:16px 20px;border-top:1px solid var(--line)}
+.sidebarFoot .whoAmI{margin:0 0 6px;font-size:12px;color:var(--sub)}
+.sidebarFoot .whoAmI b{color:var(--ink)}
+.sidebarFoot .whoAmI a{color:var(--accent);text-decoration:none;font-weight:700;margin-left:2px}
 
 .seg{display:flex;background:var(--chip);border-radius:11px;padding:3px;gap:2px;margin-top:10px}
 .seg button{flex:1;border:none;background:transparent;color:var(--sub);font-weight:700;font-size:13px;padding:8px 6px;border-radius:9px;letter-spacing:.1px}
@@ -74,11 +100,10 @@ header.app{position:sticky;top:0;z-index:5;background:var(--paper);padding:max(1
 .store{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
 .storehead{display:flex;align-items:center;gap:10px;padding:13px 14px 10px}
 .storehead h2{margin:0;font-size:14.5px;font-weight:800;letter-spacing:-.1px;flex:1;min-width:0}
-.goalpill{position:relative;color:var(--accent-ink);background:var(--accent);font-weight:800;font-variant-numeric:tabular-nums;padding:7px 12px 7px 14px;border-radius:9px;font-size:15px;white-space:nowrap;flex:0 0 auto}
-.goalpill::before{content:"";position:absolute;left:-1px;top:50%;width:8px;height:8px;background:var(--paper);border-radius:50%;transform:translate(-50%,-50%)}
-.goalpill small{display:block;font-size:8.5px;font-weight:700;opacity:.85;letter-spacing:.4px;text-transform:uppercase;line-height:1.3}
-.goalpill.hit{background:var(--ok)}
-.goalpill.floor{background:var(--warn)}
+.goalpill{position:relative;color:var(--ink);background:var(--chip);font-weight:800;font-variant-numeric:tabular-nums;padding:7px 12px;border-radius:9px;font-size:15px;white-space:nowrap;flex:0 0 auto}
+.goalpill small{display:block;font-size:8.5px;font-weight:700;opacity:.75;letter-spacing:.4px;text-transform:uppercase;line-height:1.3}
+.goalpill.hit{background:var(--ok-soft);color:var(--ok)}
+.goalpill.floor{background:var(--accent-soft);color:var(--accent)}
 
 .inputs{display:flex;gap:7px;padding:0 14px 12px;align-items:flex-end}
 .field{flex:1 1 62px;display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -99,7 +124,7 @@ header.app{position:sticky;top:0;z-index:5;background:var(--paper);padding:max(1
 .pinfo{flex:1;min-width:0}
 .nm{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ph{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums}
-.badge{font-size:10.5px;font-weight:700;padding:3px 7px;border-radius:6px;background:var(--warn-soft);color:var(--warn);flex:0 0 auto}
+.badge{font-size:10.5px;font-weight:700;padding:3px 7px;border-radius:6px;background:var(--danger-soft);color:var(--danger);flex:0 0 auto}
 .cbx{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);flex:0 0 auto;display:grid;place-items:center;font-size:14px;color:transparent;font-weight:800}
 .person.sel .cbx{background:var(--ok);border-color:var(--ok);color:#fff}
 
@@ -196,7 +221,7 @@ table.ly input{width:100%;max-width:58px;font:12px/1 inherit;font-variant-numeri
 .cc-pinfo{flex:1;min-width:0}
 .cc-pname{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cc-psub{font-size:11.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cc-nophone{font-size:10.5px;font-weight:700;padding:3px 7px;border-radius:6px;background:var(--warn-soft);color:var(--warn);flex:0 0 auto}
+.cc-nophone{font-size:10.5px;font-weight:700;padding:3px 7px;border-radius:6px;background:var(--danger-soft);color:var(--danger);flex:0 0 auto}
 .cc-addperson{display:flex;align-items:center;gap:8px;padding:12px 14px;color:var(--accent);font-weight:700;font-size:13.5px;cursor:pointer;border-top:1px dashed var(--line)}
 .cc-empty{padding:16px 14px;font-size:12.5px;color:var(--sub)}
 
@@ -219,7 +244,7 @@ dialog.sheet::backdrop{background:rgba(10,8,6,.55)}
 .phonebadge.warn{color:var(--warn)}
 .sheet-actions{display:flex;gap:10px;margin-top:4px}
 .sheet-actions .btn-primary{flex:1}
-.btn-danger{flex:0 0 auto;background:var(--warn-soft);color:var(--warn);border:none;border-radius:10px;padding:11px 16px;font:inherit;font-weight:800;font-size:13.5px}
+.btn-danger{flex:0 0 auto;background:var(--danger-soft);color:var(--danger);border:none;border-radius:10px;padding:11px 16px;font:inherit;font-weight:800;font-size:13.5px}
 .sheet-cancel{width:100%;background:transparent;border:none;color:var(--sub);font:inherit;font-weight:700;font-size:13px;padding:12px;margin-top:2px}
 .hoursgrid{display:flex;gap:7px}
 .hourfield{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -246,30 +271,62 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
 .qrow.done .send{background:var(--sub)}
 .dlg-f{padding:12px 16px;display:flex;gap:10px}
 .dlg-f button{flex:1;padding:12px;border-radius:11px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:700}
+
+/* ---------- desktop layout (sidebar replaces the mobile bottom nav) ---------- */
+@media (min-width:900px){
+  .sidebar{display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:260px;background:var(--card);border-right:1px solid var(--line);overflow-y:auto;z-index:7}
+  .appMain{margin-left:260px}
+  header.app .brand{display:none}
+  header.app{padding-top:22px;padding-left:28px;padding-right:28px}
+  header.app:not(.on-send){display:none}
+  .page{max-width:640px;margin:0 auto;padding:0 28px 24px}
+  nav.tabbar{display:none}
+  #dock{left:260px;background:transparent;border-top:none}
+  .bar{max-width:640px;margin:0 auto 18px;border-radius:16px;border:1px solid var(--line);box-shadow:var(--shadow)}
+}
 </style>
 </head>
 <body>
 
-<header class="app">
-  <div class="brand"><span class="mark"></span><h1>District Texter</h1><span class="day" id="dayLabel"></span></div>
-  <div class="seg" id="modeSeg">
-    <button data-mode="openers" class="on">☀️&nbsp; Openers</button>
-    <button data-mode="closers">🌙&nbsp; Closers</button>
-    <button data-mode="lowsales">📉&nbsp; Low</button>
+<aside class="sidebar">
+  <div class="sidebarBrand">
+    <img src="assets/sunburst-icon.png" alt="" aria-hidden="true">
+    <p class="sidebarTitle">District Texter</p>
   </div>
-  <button class="todaySummary" id="todaySummaryBtn" aria-expanded="false">
-    <span id="todaySummaryText"></span>
-    <span class="chev">⌄</span>
-  </button>
-  <div id="floorlineOpeners" class="todayDetail">
-    <div class="bucketseg headerbucketseg" id="headerBucketSeg">
-      <button data-bucket="monthu">Mon–Thu</button>
-      <button data-bucket="frisun">Fri &amp; Sun</button>
-      <button data-bucket="sat">Sat</button>
+  <nav class="sidebarNav" aria-label="Main">
+    <button data-page="pageSend" class="on"><span class="ic">💬</span><span class="navtext"><b>Send</b><small>Pick people, start texting</small></span></button>
+    <button data-page="pageSetup"><span class="ic">⚙️</span><span class="navtext"><b>Setup</b><small>Report paste &amp; templates</small></span></button>
+    <button data-page="pageToday"><span class="ic">📋</span><span class="navtext"><b>Today</b><small>Checklist &amp; sales overview</small></span></button>
+    <button data-page="pageContacts"><span class="ic">👥</span><span class="navtext"><b>Contacts</b><small>Stores, people &amp; hours</small></span></button>
+  </nav>
+  <div class="sidebarFoot">
+    <p class="whoAmI">You: <b class="myNameLabel">not set</b> <a href="#" class="changeNameLink">change</a></p>
+    <span class="syncbadge teamSyncBadge"></span>
+  </div>
+</aside>
+<div class="appMain">
+<header class="app on-send" id="appHeader">
+  <div class="brand"><img class="mark" src="assets/sunburst-icon.png" alt="" aria-hidden="true"><h1>District Texter</h1><span class="day" id="dayLabel"></span></div>
+  <div id="sendHeaderControls">
+    <div class="seg" id="modeSeg">
+      <button data-mode="openers" class="on">☀️&nbsp; Openers</button>
+      <button data-mode="closers">🌙&nbsp; Closers</button>
+      <button data-mode="lowsales">📉&nbsp; Low</button>
     </div>
-    <div class="floorline">minimum <b id="floorLabel"></b><span class="dot"></span><span id="autoTag"></span></div>
+    <button class="todaySummary" id="todaySummaryBtn" aria-expanded="false">
+      <span id="todaySummaryText"></span>
+      <span class="chev">⌄</span>
+    </button>
+    <div id="floorlineOpeners" class="todayDetail">
+      <div class="bucketseg headerbucketseg" id="headerBucketSeg">
+        <button data-bucket="monthu">Mon–Thu</button>
+        <button data-bucket="frisun">Fri &amp; Sun</button>
+        <button data-bucket="sat">Sat</button>
+      </div>
+      <div class="floorline">minimum <b id="floorLabel"></b><span class="dot"></span><span id="autoTag"></span></div>
+    </div>
+    <div class="floorline" id="floorlineLow" style="display:none">Texting stores under <b id="lowThreshLabel"></b> in sales today</div>
   </div>
-  <div class="floorline" id="floorlineLow" style="display:none">Texting stores under <b id="lowThreshLabel"></b> in sales today</div>
 </header>
 
 <section class="page on" id="pageSend">
@@ -279,7 +336,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
 <section class="page" id="pageToday">
   <div class="todayHead">
     <h2>Today's checklist</h2>
-    <div class="whoAmI">You: <b id="myNameLabel"></b> <a href="#" id="changeNameLink">change</a><span class="syncbadge" id="teamSyncBadge"></span></div>
+    <div class="whoAmI">You: <b id="myNameLabel" class="myNameLabel"></b> <a href="#" id="changeNameLink" class="changeNameLink">change</a><span class="syncbadge teamSyncBadge" id="teamSyncBadge"></span></div>
   </div>
   <div id="taskList"></div>
   <div class="todaySalesHead">Sales vs. goal right now</div>
@@ -367,6 +424,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
     <button class="btn-clear" id="cancelAddStoreBtn">Cancel</button>
   </div>
 </section>
+</div>
 
 <div id="dock">
   <div class="bar" id="sendBar">
@@ -375,9 +433,9 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
   </div>
   <nav class="tabbar">
     <button class="on" data-page="pageSend"><span class="ic">💬</span>Send</button>
+    <button data-page="pageSetup"><span class="ic">⚙️</span>Setup</button>
     <button data-page="pageToday"><span class="ic">📋</span>Today</button>
     <button data-page="pageContacts"><span class="ic">👥</span>Contacts</button>
-    <button data-page="pageSetup"><span class="ic">⚙️</span>Setup</button>
   </nav>
 </div>
 
@@ -843,12 +901,14 @@ document.querySelectorAll('#modeSeg button').forEach(b=>b.addEventListener('clic
   render();
 }));
 
-// ---- bottom tab bar (Send / Setup) ----
-document.querySelectorAll('nav.tabbar button').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('nav.tabbar button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+// ---- page nav (mobile bottom tab bar + desktop sidebar — same buttons, two places) ----
+document.querySelectorAll('nav.tabbar button, .sidebarNav button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('nav.tabbar button, .sidebarNav button').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('[data-page="'+b.dataset.page+'"]').forEach(x=>x.classList.add('on'));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById(b.dataset.page).classList.add('on');
   document.getElementById('sendBar').style.display = b.dataset.page==='pageSend' ? 'flex' : 'none';
+  document.getElementById('appHeader').classList.toggle('on-send', b.dataset.page==='pageSend');
   if (b.dataset.page==='pageContacts') renderContacts();
   if (b.dataset.page==='pageToday') {
     updateMyNameLabel();
@@ -1179,7 +1239,7 @@ function showUndoSnack(text, onUndo){
 renderContacts();
 
 // ---- today tab: shared checklist + live sales-vs-goal overview ----
-function updateMyNameLabel(){ document.getElementById('myNameLabel').textContent = myName || 'not set'; }
+function updateMyNameLabel(){ document.querySelectorAll('.myNameLabel').forEach(el=>el.textContent = myName || 'not set'); }
 const nameDlg = document.getElementById('nameDlg');
 function openNameDlg(){ document.getElementById('myNameInput').value = myName; nameDlg.showModal(); }
 document.getElementById('myNameSaveBtn').addEventListener('click', ()=>{
@@ -1190,7 +1250,7 @@ document.getElementById('myNameSaveBtn').addEventListener('click', ()=>{
   updateMyNameLabel();
   nameDlg.close();
 });
-document.getElementById('changeNameLink').addEventListener('click', e=>{ e.preventDefault(); openNameDlg(); });
+document.querySelectorAll('.changeNameLink').forEach(el=>el.addEventListener('click', e=>{ e.preventDefault(); openNameDlg(); }));
 
 const taskListEl = document.getElementById('taskList');
 function renderToday(){
@@ -1225,8 +1285,9 @@ function renderTodayOverview(){
 let rosterSyncFailed = false;
 function updateTeamSyncBadge(){
   const configured = window.districtSync && window.districtSync.configured;
-  const dayEl = document.getElementById('teamSyncBadge');
-  if (dayEl){ dayEl.textContent = configured ? 'Live with team ✓' : ''; dayEl.className = 'syncbadge'+(configured?' synced':''); }
+  document.querySelectorAll('.teamSyncBadge').forEach(dayEl=>{
+    dayEl.textContent = configured ? 'Live with team ✓' : ''; dayEl.className = 'syncbadge teamSyncBadge'+(configured?' synced':'');
+  });
   // Contacts gets its own badge state — the days/ collection can be synced fine while the
   // roster/ collection is still denied by Firestore rules (a real gap this caught once).
   const rosterEl = document.getElementById('syncBadge');
