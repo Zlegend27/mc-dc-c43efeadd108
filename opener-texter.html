@@ -55,6 +55,8 @@ header.app.on-send #sendHeaderControls{display:block}
 .brand .mark{width:30px;height:30px;flex:0 0 auto;object-fit:contain}
 .brand h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.2px}
 .brand .day{margin-left:auto;font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--sub)}
+.districtStat{display:flex;align-items:center;gap:6px;width:100%;background:var(--chip);border:none;border-radius:10px;padding:9px 12px;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--ink);text-align:left}
+.districtStat .chev{margin-left:auto;color:var(--sub);font-size:14px}
 
 /* ---------- desktop sidebar (hidden until the md+ breakpoint) ---------- */
 .sidebar{display:none}
@@ -100,7 +102,7 @@ header.app.on-send #sendHeaderControls{display:block}
 .store{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
 .storehead{display:flex;align-items:center;gap:10px;padding:13px 14px 10px}
 .storehead h2{margin:0;font-size:14.5px;font-weight:800;letter-spacing:-.1px;flex:1;min-width:0}
-.goalpill{position:relative;color:var(--ink);background:var(--chip);font-weight:800;font-variant-numeric:tabular-nums;padding:7px 12px;border-radius:9px;font-size:15px;white-space:nowrap;flex:0 0 auto}
+.goalpill{position:relative;color:var(--ink);background:var(--chip);font-weight:800;font-variant-numeric:tabular-nums;padding:7px 12px;border-radius:9px;font-size:15px;white-space:nowrap;flex:0 0 auto;border:none;font-family:inherit;cursor:pointer;text-align:right}
 .goalpill small{display:block;font-size:8.5px;font-weight:700;opacity:.75;letter-spacing:.4px;text-transform:uppercase;line-height:1.3}
 .goalpill.hit{background:var(--ok-soft);color:var(--ok)}
 .goalpill.floor{background:var(--accent-soft);color:var(--accent)}
@@ -206,6 +208,18 @@ table.ly input{width:100%;max-width:58px;font:12px/1 inherit;font-variant-numeri
 .ovnum{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap}
 .ovnum.hit{color:var(--ok);font-weight:700}
 .sheet-help{font-size:12px;color:var(--sub);margin:0 0 12px;line-height:1.5}
+.statsGrid{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
+.statrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line)}
+.statrow:last-child{border-bottom:none}
+.statlabel{font-size:12.5px;color:var(--sub)}
+.statvalue{font-size:13.5px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+.statsStoreHead{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:var(--sub);margin:16px 0 6px}
+.storeStatRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:12.5px}
+.storeStatRow:last-child{border-bottom:none}
+.storeStatRow .ssName{font-weight:700}
+.storeStatRow .ssNum{font-variant-numeric:tabular-nums;color:var(--sub)}
+.storeStatRow .ssNum b{color:var(--ok)}
+.storeStatRow.behind .ssNum b{color:var(--warn)}
 
 .ccard{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
 .cc-head{display:flex;align-items:center;gap:8px;padding:13px 14px 9px}
@@ -285,6 +299,12 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
   .bar{max-width:640px;margin:0 auto 18px;border-radius:16px;border:1px solid var(--line);box-shadow:var(--shadow)}
 }
 </style>
+<script>
+try {
+  var __t = localStorage.getItem('districtTexter.theme.v1');
+  if (__t === 'light' || __t === 'dark') document.documentElement.setAttribute('data-theme', __t);
+} catch(e) {}
+</script>
 </head>
 <body>
 
@@ -293,6 +313,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
     <img src="assets/sunburst-icon.png" alt="" aria-hidden="true">
     <p class="sidebarTitle">District Texter</p>
   </div>
+  <button class="districtStat" id="districtStatBtnSide"><span class="districtStatText"></span><span class="chev">›</span></button>
   <nav class="sidebarNav" aria-label="Main">
     <button data-page="pageSend" class="on"><span class="ic">💬</span><span class="navtext"><b>Send</b><small>Pick people, start texting</small></span></button>
     <button data-page="pageSetup"><span class="ic">⚙️</span><span class="navtext"><b>Setup</b><small>Report paste &amp; templates</small></span></button>
@@ -307,6 +328,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
 <div class="appMain">
 <header class="app on-send" id="appHeader">
   <div class="brand"><img class="mark" src="assets/sunburst-icon.png" alt="" aria-hidden="true"><h1>District Texter</h1><span class="day" id="dayLabel"></span></div>
+  <button class="districtStat" id="districtStatBtnTop"><span class="districtStatText"></span><span class="chev">›</span></button>
   <div id="sendHeaderControls">
     <div class="seg" id="modeSeg">
       <button data-mode="openers" class="on">☀️&nbsp; Openers</button>
@@ -350,7 +372,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
     <div class="card-h">
       <div class="eyebrow">Step 1 · Every check-in</div>
       <h3>📋 Paste today's Shopify report</h3>
-      <p>Paste the combined export — store, today's sales, LY same-weekday sales, and (once your reports include it) LY average order. Matches every store by name and fills everything in below in one shot.</p>
+      <p>Paste the combined export (store, today's sales, LY sales, AOV) and it matches every store by name and fills everything in below.</p>
     </div>
     <div class="card-b">
       <textarea class="mono" id="pasteBox" placeholder="POS location name,Total sales,Total sales (previous_year_match_day_of_week),Average order (previous_year_match_day_of_week)&#10;Orland Square,321.73,1391.47,62.10&#10;..."></textarea>
@@ -366,7 +388,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
     <div class="card-h">
       <div class="eyebrow">Step 2 · As needed</div>
       <h3>✏️ Opener / Closer templates</h3>
-      <p>Wording and the minimum daily goal for each part of the week. Every text also gets an automatic numbers block (LY total, LY average order, $/hr) appended below your message. LY numbers themselves come from Step 1's paste, or can be tweaked right on each store's card in Send.</p>
+      <p>Set the wording and minimum daily goal for each part of the week — every text also gets an automatic numbers block (LY total, AOV, $/hr) appended below it.</p>
     </div>
     <div class="card-b">
       <div class="bucketseg" id="editBucketSeg">
@@ -380,7 +402,7 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
         <label>use this instead</label>
       </div>
       <textarea class="prose" id="tmplBox"></textarea>
-      <div class="hint">Use <b>{name}</b>, <b>{amount}</b>, and <b>{day}</b> (fills in the real day, e.g. "Friday" or "Sunday" — handy since these days share one message). {amount} is today's live goal (last year's number, or the minimum above if that's higher, minus what's sold today). The numbers block is added automatically, and paces itself against the real hours left until that store closes today (set per store in Contacts).</div>
+      <div class="hint">Use <b>{name}</b>, <b>{amount}</b>, and <b>{day}</b> in your message — {amount} fills in today's live goal automatically.</div>
     </div>
   </div>
 
@@ -405,6 +427,20 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
     </div>
   </div>
 
+  <div class="card">
+    <div class="card-h">
+      <div class="eyebrow">Appearance</div>
+      <h3>🌗 Light / Dark</h3>
+      <p>Auto follows your phone's setting — pick Light or Dark to always use that instead.</p>
+    </div>
+    <div class="card-b">
+      <div class="bucketseg" id="themeSeg">
+        <button data-theme-choice="light">☀️ Light</button>
+        <button data-theme-choice="dark">🌙 Dark</button>
+        <button data-theme-choice="auto" class="on">📱 Auto</button>
+      </div>
+    </div>
+  </div>
 
 </section>
 
@@ -493,6 +529,26 @@ dialog::backdrop{background:rgba(10,8,6,.55)}
   <div class="sheet-actions">
     <button class="btn-primary sheet-save" id="myNameSaveBtn">Save</button>
   </div>
+</dialog>
+
+<dialog id="districtStatsDlg" class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">District stats — <span id="districtStatsDay"></span></div>
+  <div class="sheet-body">
+    <div class="statsGrid" id="districtStatsGrid"></div>
+    <div class="statsStoreHead">By store</div>
+    <div id="districtStatsStores"></div>
+  </div>
+  <button class="sheet-cancel" id="districtStatsCloseBtn">Close</button>
+</dialog>
+
+<dialog id="storeStatsDlg" class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="storeStatsMall"></div>
+  <div class="sheet-body">
+    <div class="statsGrid" id="storeStatsGrid"></div>
+  </div>
+  <button class="sheet-cancel" id="storeStatsCloseBtn">Close</button>
 </dialog>
 
 <div id="undoSnack" class="undosnack"></div>
@@ -724,6 +780,66 @@ function lowSalesInfo(mall){
   return { ly, sold, gap, under: sold < threshold };
 }
 
+// ---- district-wide stat (raw today-vs-LY across every store; not time-of-day-paced yet — ----
+// ---- that needs real intraday Shopify data, parked alongside the Shopify auto-sync work) ----
+function districtStat(){
+  let sold=0, ly=0;
+  for (const s of data){ sold += Number(todaySales[s.mall])||0; ly += (lyStore[s.mall]||[])[todayIdx]||0; }
+  const diff = Math.round(sold-ly);
+  const pct = ly>0 ? Math.round((sold/ly)*100) : 0;
+  return { sold, ly, diff, pct };
+}
+function renderDistrictStat(){
+  const d = districtStat();
+  const text = d.pct+'% of LY · $'+Math.abs(d.diff).toLocaleString()+(d.diff>=0?' ahead':' to go');
+  document.querySelectorAll('.districtStatText').forEach(el=>el.textContent=text);
+}
+function openDistrictStats(){
+  const d = districtStat();
+  document.getElementById('districtStatsDay').textContent = DAY_FULL[todayIdx];
+  const rows = [
+    ['District sold today', '$'+d.sold.toLocaleString()],
+    ['District LY ('+DAY_KEYS[todayIdx]+')', '$'+d.ly.toLocaleString()],
+    ['% of LY', d.pct+'%'],
+    [d.diff>=0?'Ahead of LY':'Behind LY', '$'+Math.abs(d.diff).toLocaleString()],
+  ];
+  document.getElementById('districtStatsGrid').innerHTML = rows.map(([l,v])=>
+    '<div class="statrow"><span class="statlabel">'+l+'</span><span class="statvalue">'+v+'</span></div>').join('');
+  const storesSorted = data.slice().sort((a,b)=>{
+    const ga = goalInfo(a.mall), gb = goalInfo(b.mall);
+    return (ga.ly - ga.sold) < (gb.ly - gb.sold) ? 1 : -1;
+  });
+  document.getElementById('districtStatsStores').innerHTML = storesSorted.map(s=>{
+    const info = goalInfo(s.mall);
+    const behind = info.sold < info.ly;
+    const numText = behind ? '−$'+(info.ly-info.sold).toLocaleString() : (info.ly ? '✓ +$'+(info.sold-info.ly).toLocaleString() : '✓');
+    return '<div class="storeStatRow'+(behind?' behind':'')+'"><span class="ssName">'+s.mall+'</span>'+
+      '<span class="ssNum">$'+info.sold.toLocaleString()+' <b>'+numText+'</b></span></div>';
+  }).join('');
+  document.getElementById('districtStatsDlg').showModal();
+}
+function openStoreStats(mall){
+  const info = goalInfo(mall);
+  document.getElementById('storeStatsMall').textContent = mall;
+  const rows = [
+    ['Sold today', '$'+info.sold.toLocaleString()],
+    ['LY ('+DAY_KEYS[todayIdx]+')', '$'+info.ly.toLocaleString()],
+    ['LY average order', info.aov ? '$'+info.aov.toLocaleString() : '—'],
+    ['Minimum goal', '$'+info.floor.toLocaleString()],
+    ['Target today', '$'+info.target.toLocaleString()+(info.floored?' (using minimum)':' (LY)')],
+    [info.hit?'Hit already':'Goal left', '$'+info.goal.toLocaleString()],
+    ['Hours left today', fmtHours(info.hours)],
+    ['Pace needed', '$'+info.perHour.toLocaleString()+'/hr'],
+  ];
+  document.getElementById('storeStatsGrid').innerHTML = rows.map(([l,v])=>
+    '<div class="statrow"><span class="statlabel">'+l+'</span><span class="statvalue">'+v+'</span></div>').join('');
+  document.getElementById('storeStatsDlg').showModal();
+}
+document.getElementById('districtStatBtnTop').addEventListener('click', openDistrictStats);
+document.getElementById('districtStatBtnSide').addEventListener('click', openDistrictStats);
+document.getElementById('districtStatsCloseBtn').addEventListener('click', ()=>document.getElementById('districtStatsDlg').close());
+document.getElementById('storeStatsCloseBtn').addEventListener('click', ()=>document.getElementById('storeStatsDlg').close());
+
 // ---- Shopify paste import ----
 document.getElementById('todayLabel').textContent = DAY_KEYS[todayIdx];
 const MALL_TOKENS = [['ORLAND','ORLAND SQUARE'],['FORT LAUDERDALE','GALLERIA FORT LAUDERDALE'],['GALLERIA FORT','GALLERIA FORT LAUDERDALE'],['WOODFIELD','WOODFIELD STORE'],['TREASURE','TREASURE COAST'],['GURNEE','GURNEE MILLS'],['CAROLINA','CAROLINA PLACE'],['TOWSON','TOWSON SQUARE STORE'],['CASTLETON','CASTLETON SQUARE'],['PRUSSIA','KING OF PRUSSIA STORE'],['ARUNDEL','ARUNDEL MILLS STORE'],['PALISADES','PALISADES STORE'],['WALDEN','WALDEN GALLERIA'],['SOMERSET','SOMERSET COLLECTIONS'],['SPRINGFIELD','SPRINGFIELD STORE'],['UTC','UTC']];
@@ -827,7 +943,7 @@ function render(){
     if (isLow){
       const info = lowSalesInfo(s.mall);
       const pillClass = info.under ? '' : 'hit';
-      pillHtml = '<div class="goalpill '+pillClass+'"><small>'+(info.under?'Gap to LY':'On track')+'</small>$'+info.gap.toLocaleString()+'</div>';
+      pillHtml = '<button type="button" class="goalpill '+pillClass+'" data-stats-mall="'+encodeURIComponent(s.mall)+'"><small>'+(info.under?'Gap to LY':'On track')+'</small>$'+info.gap.toLocaleString()+'</button>';
       inputsHtml = '<div class="inputs">'+
           '<div class="field quiet"><label>LY '+DAY_KEYS[todayIdx]+'</label><input type="number" inputmode="decimal" data-ly-mall="'+encodeURIComponent(s.mall)+'" value="'+info.ly+'"></div>'+
           '<div class="field"><label>Today</label><input type="number" inputmode="decimal" placeholder="0" data-today-mall="'+encodeURIComponent(s.mall)+'" value="'+(todaySales[s.mall]!=null?todaySales[s.mall]:'')+'"></div>'+
@@ -836,7 +952,7 @@ function render(){
     } else {
       const info = goalInfo(s.mall);
       const pillClass = info.hit ? 'hit' : (info.floored ? 'floor' : '');
-      pillHtml = '<div class="goalpill '+pillClass+'"><small>'+(info.hit?'Hit already':(info.floored?'Goal (minimum)':'Goal left'))+'</small>$'+info.goal.toLocaleString()+'</div>';
+      pillHtml = '<button type="button" class="goalpill '+pillClass+'" data-stats-mall="'+encodeURIComponent(s.mall)+'"><small>'+(info.hit?'Hit already':(info.floored?'Goal (minimum)':'Goal left'))+'</small>$'+info.goal.toLocaleString()+'</button>';
       inputsHtml = '<div class="inputs">'+
           '<div class="field quiet"><label>LY</label><input type="number" inputmode="decimal" data-ly-mall="'+encodeURIComponent(s.mall)+'" value="'+info.ly+'"></div>'+
           '<div class="field quiet"><label>AOV</label><input type="number" inputmode="decimal" data-aov-mall="'+encodeURIComponent(s.mall)+'" value="'+info.aov+'"></div>'+
@@ -884,6 +1000,10 @@ function render(){
       render();
     });
   });
+  list.querySelectorAll('[data-stats-mall]').forEach(btn=>{
+    btn.addEventListener('click', e=>{ e.stopPropagation(); openStoreStats(decodeURIComponent(btn.dataset.statsMall)); });
+  });
+  renderDistrictStat();
 }
 function titleCase(s){ return s.replace(/[A-Za-z']+/g, w=> w[0].toUpperCase()+w.slice(1).toLowerCase()); }
 function updateCount(){ document.getElementById('n').textContent=sel.size; document.getElementById('go').disabled=!sel.size; }
@@ -1004,6 +1124,26 @@ document.getElementById('lowPreset5pm').addEventListener('click', ()=>{
   lowTemplate.threshold = 300; loadLowEditor(); saveLowTemplate(); renderFloorLine(); if(mode==='lowsales') render();
 });
 loadLowEditor();
+
+// ---- appearance (Setup > Light/Dark/Auto) ----
+const THEME_KEY = 'districtTexter.theme.v1';
+function loadThemeChoice(){ try{ return localStorage.getItem(THEME_KEY)||'auto'; }catch{ return 'auto'; } }
+function applyTheme(choice){
+  if (choice==='light' || choice==='dark') document.documentElement.setAttribute('data-theme', choice);
+  else document.documentElement.removeAttribute('data-theme');
+}
+let themeChoice = loadThemeChoice();
+applyTheme(themeChoice);
+document.querySelectorAll('#themeSeg button').forEach(b=>{
+  b.classList.toggle('on', b.dataset.themeChoice===themeChoice);
+  b.addEventListener('click', ()=>{
+    themeChoice = b.dataset.themeChoice;
+    document.querySelectorAll('#themeSeg button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    applyTheme(themeChoice);
+    localStorage.setItem(THEME_KEY, themeChoice);
+  });
+});
 
 // ---- contacts tab: search + card list + tap-to-edit sheets ----
 function saveStaffForMall(mall, staffArr){
