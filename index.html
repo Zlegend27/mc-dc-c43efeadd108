@@ -154,6 +154,15 @@ nav.tabbar button.on{color:var(--accent)}
 
 textarea.mono{width:100%;min-height:96px;font:12.5px/1.5 ui-monospace,"SF Mono",Menlo,monospace;border:1px solid var(--line);border-radius:11px;padding:11px;background:var(--paper);color:var(--ink);resize:vertical}
 textarea.prose{width:100%;min-height:120px;font:14px/1.5 inherit;border:1px solid var(--line);border-radius:11px;padding:11px;background:var(--paper);color:var(--ink);resize:vertical}
+.importRow{display:flex;flex-direction:column;gap:9px}
+.importBtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:15px 14px;font:inherit;font-weight:800;font-size:14.5px;cursor:pointer;text-align:center}
+.importBtn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.manualPaste{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.manualPaste summary{font-size:12.5px;font-weight:700;color:var(--sub);cursor:pointer;padding:4px 0;list-style:none}
+.manualPaste summary::-webkit-details-marker{display:none}
+.manualPaste summary::before{content:"▸ ";color:var(--sub)}
+.manualPaste[open] summary::before{content:"▾ "}
+.manualPaste textarea{margin-top:8px}
 .rowline{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
 .btn-primary{background:var(--accent);color:var(--accent-ink);border:none;border-radius:10px;padding:10px 16px;font:inherit;font-weight:800;font-size:13.5px}
 .btn-clear{background:var(--chip);color:var(--sub);border:none;border-radius:10px;padding:10px 14px;font:inherit;font-weight:700;font-size:13.5px}
@@ -371,16 +380,25 @@ try {
   <div class="card">
     <div class="card-h">
       <div class="eyebrow">Step 1 · Every check-in</div>
-      <h3>📋 Paste today's Shopify report</h3>
-      <p>Paste the combined export (store, today's sales, LY sales, AOV) and it matches every store by name and fills everything in below.</p>
+      <h3>📋 Today's Shopify report</h3>
+      <p>Pick the CSV file Shopify gave you, or paste the report — either one fills in every store.</p>
     </div>
     <div class="card-b">
-      <textarea class="mono" id="pasteBox" placeholder="POS location name,Total sales,Total sales (previous_year_match_day_of_week),Average order (previous_year_match_day_of_week)&#10;Orland Square,321.73,1391.47,62.10&#10;..."></textarea>
-      <div class="rowline">
-        <button class="btn-primary" id="applyPaste">Apply to <span id="todayLabel"></span></button>
-        <button class="btn-clear" id="clearPaste">Clear</button>
-        <span class="status" id="pasteMsg"></span>
+      <div class="importRow">
+        <label class="importBtn primary">📄 Choose CSV file
+          <input type="file" id="csvFileInput" accept=".csv,text/csv,text/comma-separated-values,text/plain" hidden>
+        </label>
+        <button class="importBtn" id="pasteClipBtn">📋 Paste from clipboard</button>
       </div>
+      <div class="status" id="pasteMsg"></div>
+      <details class="manualPaste" id="manualPaste">
+        <summary>Or paste it by hand</summary>
+        <textarea class="mono" id="pasteBox" placeholder="Store, today's sales, LY sales, AOV&#10;Orland Square, $321.73, $1,391.47, $62.10&#10;...&#10;&#10;Mid-day you can paste just store + today's sales."></textarea>
+        <div class="rowline">
+          <button class="btn-primary" id="applyPaste">Apply to <span id="todayLabel"></span></button>
+          <button class="btn-clear" id="clearPaste">Clear</button>
+        </div>
+      </details>
     </div>
   </div>
 
@@ -856,6 +874,12 @@ function canonMall(loc){
   return null;
 }
 function parseCSVText(text){
+  // A comma inside an *unquoted* thousands-separated number ("$1,650" — exactly what you
+  // get copying a rendered table on mobile, not a real CSV export) otherwise reads as a
+  // field separator and silently splits one number into two. Collapse those first — a
+  // digit-comma-3digits run with no digit before/after is always a thousands separator,
+  // never a genuine field boundary (real fields don't end with a bare trailing digit).
+  text = text.replace(/\d(?:,\d{3})+(?!\d)/g, m => m.replace(/,/g,''));
   const rows=[]; let row=[],cur='',q=false;
   for(let i=0;i<text.length;i++){const c=text[i];
     if(q){ if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
@@ -888,50 +912,103 @@ function detectColumns(headerRow){
   if (idx.ly===-1) idx.ly=2;
   return idx;
 }
-document.getElementById('clearPaste').addEventListener('click', ()=>{
-  document.getElementById('pasteBox').value='';
-  const msg = document.getElementById('pasteMsg');
-  msg.textContent=''; msg.className='status';
-});
-document.getElementById('applyPaste').addEventListener('click', ()=>{
-  const raw = document.getElementById('pasteBox').value.trim();
-  const msg = document.getElementById('pasteMsg');
-  if (!raw) { msg.textContent='Paste the report first.'; msg.className='status warn'; return; }
+// Strips $, commas, and stray whitespace before parsing — a plain parseFloat on "$1,391.47"
+// (exactly what you get copying a rendered table on mobile, not a raw CSV) silently reads as
+// 1, and "$1,391.47" alone reads as NaN and gets skipped. Both failed with zero warning.
+function cleanNumber(v){
+  if (v==null) return NaN;
+  const s = String(v).replace(/[$,\s]/g,'');
+  return s===''? NaN : parseFloat(s);
+}
+const pasteMsgEl = document.getElementById('pasteMsg');
+function setPasteMsg(text, cls){ pasteMsgEl.textContent = text; pasteMsgEl.className = 'status'+(cls?' '+cls:''); }
+function applyReportText(raw){
+  raw = (raw||'').trim();
+  if (!raw) { setPasteMsg('That report looks empty — try again.', 'warn'); return; }
+  const beforeSold = {}; for (const s of data) beforeSold[s.mall] = Number(todaySales[s.mall])||0;
   const rows = parseCSVText(raw);
   let dataRows = rows, idx = { loc:0, today:1, ly:2, aov:3 };
-  if (rows.length && /pos location|store|mall/i.test(rows[0][0]||'')) {
+  // A header row's other columns are labels ("Total sales"); a data row's are numbers. Several
+  // real store names contain the word "store" (WOODFIELD STORE, PALISADES STORE, ...), so on a
+  // single-row minimal paste, checking column 0 alone misreads the only data row as a header
+  // and silently drops it — checking that the rest of the row is non-numeric avoids that.
+  const firstRowIsHeader = rows.length && /pos location|store|mall/i.test(rows[0][0]||'')
+    && rows[0].slice(1).every(v => !(v||'').trim() || isNaN(cleanNumber(v)));
+  if (firstRowIsHeader) {
     idx = detectColumns(rows[0]);
     dataRows = rows.slice(1);
   }
-  let matched=0, added=[], gotAov=false, ignored=0;
+  let matched=0, added=[], gotAov=false, changed=[], skipped=0;
   for (const r of dataRows) {
     const loc = (r[idx.loc]||'').trim();
     if (!loc) continue;
-    if (isIgnoredMall(loc)) { ignored++; continue; }
+    if (isIgnoredMall(loc)) continue;
     let mall = canonMall(loc);
     if (!mall) {
-      // Store not in the Staff Contact sheet yet (e.g. a newly opened mall) — still capture
-      // its numbers instead of dropping the row, so nothing gets silently skipped.
+      // A store not on file yet (e.g. a newly opened mall) still gets captured instead of
+      // silently dropped — but only if it's plausibly a store name. Shopify sometimes gives
+      // you a download *link* for the export instead of the file's contents; pasting that
+      // by mistake previously got added verbatim as a new "store" (a ~900-char URL), and
+      // since Contacts edits sync the whole roster, that garbage made it into the shared
+      // database. A store name is short, human text — never a URL.
+      if (loc.length > 60 || /^https?:\/\//i.test(loc)) { skipped++; continue; }
       mall = loc.toUpperCase().replace(/\s+/g,' ').trim();
       if (!data.some(s=>s.mall===mall)) { data.push({mall, staff:[]}); added.push(mall); }
       if (!extraMalls.includes(mall)) { extraMalls.push(mall); saveExtraMalls(extraMalls); }
       if (!lyStore[mall]) lyStore[mall]=DAY_KEYS.map(()=>0);
       if (!lyAov[mall]) lyAov[mall]=DAY_KEYS.map(()=>0);
     }
-    const todaySale = parseFloat(r[idx.today]);
-    const lySale = parseFloat(r[idx.ly]);
-    const aov = idx.aov>=0 ? parseFloat(r[idx.aov]) : NaN;
-    if (!isNaN(todaySale)) { todaySales[mall]=Math.round(todaySale); }
+    const todaySale = cleanNumber(r[idx.today]);
+    const lySale = cleanNumber(r[idx.ly]);
+    const aov = idx.aov>=0 ? cleanNumber(r[idx.aov]) : NaN;
+    if (!isNaN(todaySale)) {
+      const prev = beforeSold[mall]||0;
+      if (Math.round(todaySale) !== prev) changed.push(mall+' $'+prev.toLocaleString()+' → $'+Math.round(todaySale).toLocaleString());
+      todaySales[mall]=Math.round(todaySale);
+    }
     if (!isNaN(lySale)) { lyStore[mall][todayIdx]=Math.round(lySale); }
     if (!isNaN(aov)) { lyAov[mall][todayIdx]=Math.round(aov); gotAov=true; }
     matched++;
   }
   saveToday(todaySales); saveLy(lyStore); saveAov(lyAov);
   render();
-  const aovNote = gotAov ? '' : ' (no AOV column found — add one to your export to include it in the stat drop)';
-  const addedNote = added.length ? ' New store(s) added with no staff yet: '+added.join(', ')+' — add their staff to the Staff Contact sheet.' : '';
-  if (matched) { msg.textContent='✓ Applied to '+matched+' stores.'+aovNote+addedNote; msg.className='status '+(gotAov && !added.length?'ok':'warn'); }
-  else { msg.textContent='No rows found — check the paste.'; msg.className='status warn'; }
+  if (!matched) {
+    const why = skipped ? " — that looked like a link, not a report. Copy the report's text, not a download link." : ' — check it\'s the right report.';
+    setPasteMsg("Couldn't match any stores in that"+why, 'warn');
+    return;
+  }
+  const bits = ['✓ '+matched+' store'+(matched===1?'':'s')+' updated'];
+  if (changed.length) bits.push(changed.slice(0,4).join(' · ')+(changed.length>4?' · +'+(changed.length-4)+' more':''));
+  if (added.length) bits.push('New: '+added.join(', ')+' (add their staff in Contacts)');
+  if (skipped) bits.push(skipped+' row'+(skipped===1?'':'s')+' skipped — didn\'t look like a store');
+  if (!gotAov) bits.push('no AOV column found');
+  setPasteMsg(bits.join(' — '), (added.length || !gotAov || skipped) ? 'warn' : 'ok');
+}
+document.getElementById('clearPaste').addEventListener('click', ()=>{
+  document.getElementById('pasteBox').value='';
+  setPasteMsg('', '');
+});
+document.getElementById('applyPaste').addEventListener('click', ()=>{
+  applyReportText(document.getElementById('pasteBox').value);
+});
+document.getElementById('csvFileInput').addEventListener('change', (e)=>{
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  setPasteMsg('Reading '+file.name+'…', '');
+  const reader = new FileReader();
+  reader.onload = () => applyReportText(String(reader.result));
+  reader.onerror = () => setPasteMsg("Couldn't open that file — try again or use paste instead.", 'warn');
+  reader.readAsText(file);
+  e.target.value = '';
+});
+document.getElementById('pasteClipBtn').addEventListener('click', async ()=>{
+  try {
+    const text = await navigator.clipboard.readText();
+    if (!text || !text.trim()) { setPasteMsg('Clipboard is empty — copy the report first, then tap this.', 'warn'); return; }
+    applyReportText(text);
+  } catch (err) {
+    setPasteMsg("Couldn't read the clipboard — copy the report again, or use \"paste it by hand\" below.", 'warn');
+  }
 });
 
 function render(){
