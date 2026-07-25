@@ -55,8 +55,11 @@ header.app.on-send #sendHeaderControls{display:block}
 .brand .mark{width:30px;height:30px;flex:0 0 auto;object-fit:contain}
 .brand h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.2px}
 .brand .day{margin-left:auto;font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--sub)}
-.districtStat{display:flex;align-items:center;gap:6px;width:100%;background:var(--chip);border:none;border-radius:10px;padding:9px 12px;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--ink);text-align:left}
-.districtStat .chev{margin-left:auto;color:var(--sub);font-size:14px}
+.districtStat{position:relative;overflow:hidden;display:flex;align-items:center;gap:6px;width:100%;background:var(--chip);border:none;border-radius:10px;padding:9px 12px;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--ink);text-align:left}
+.districtStat .chev{position:relative;z-index:1;margin-left:auto;color:var(--sub);font-size:14px}
+.districtStat .districtStatText{position:relative;z-index:1}
+.districtStatFill{position:absolute;inset:0;width:0%;background:var(--accent-soft);z-index:0;transition:width .5s ease}
+.districtStatFill.ahead{background:var(--ok-soft)}
 
 /* ---------- desktop sidebar (hidden until the md+ breakpoint) ---------- */
 .sidebar{display:none}
@@ -222,13 +225,18 @@ table.ly input{width:100%;max-width:58px;font:12px/1 inherit;font-variant-numeri
 .statrow:last-child{border-bottom:none}
 .statlabel{font-size:12.5px;color:var(--sub)}
 .statvalue{font-size:13.5px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
-.statsStoreHead{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:var(--sub);margin:16px 0 6px}
-.storeStatRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:12.5px}
-.storeStatRow:last-child{border-bottom:none}
-.storeStatRow .ssName{font-weight:700}
-.storeStatRow .ssNum{font-variant-numeric:tabular-nums;color:var(--sub)}
-.storeStatRow .ssNum b{color:var(--ok)}
-.storeStatRow.behind .ssNum b{color:var(--warn)}
+.statHero{text-align:center;padding:6px 0 16px}
+.statHeroPct{font-size:38px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:var(--accent)}
+.statHeroPct.ahead{color:var(--ok)}
+.statHeroSub{font-size:12.5px;color:var(--sub);margin-top:5px;font-weight:600}
+.statBar{position:relative;height:12px;border-radius:99px;background:var(--chip);overflow:hidden;margin:14px 0 7px}
+.statBarFill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--accent);width:0%;transition:width .6s ease}
+.statBarFill.ahead{background:var(--ok)}
+.statBarLabels{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);font-weight:700}
+.statTiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.statTile{background:var(--paper);border-radius:12px;padding:11px 13px}
+.statTile .stLabel{display:block;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:var(--sub);margin-bottom:4px}
+.statTile .stValue{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
 
 .ccard{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
 .cc-head{display:flex;align-items:center;gap:8px;padding:13px 14px 9px}
@@ -253,10 +261,11 @@ table.ly input{width:100%;max-width:58px;font:12px/1 inherit;font-variant-numeri
 .addstorerow input{flex:1;font:14px/1.2 inherit;border:1px solid var(--line);border-radius:9px;padding:10px 11px;background:var(--card);color:var(--ink)}
 
 /* ---------- bottom-sheet dialogs (person / hours editors) ---------- */
-dialog.sheet{border:none;border-radius:20px 20px 0 0;padding:16px 18px calc(16px + env(safe-area-inset-bottom));max-width:440px;width:92%;background:var(--card);color:var(--ink);position:fixed;bottom:0;top:auto;margin:0 auto}
+dialog.sheet{border:none;border-radius:20px 20px 0 0;padding:16px 18px calc(16px + env(safe-area-inset-bottom));max-width:440px;width:92%;max-height:85vh;overflow-y:auto;background:var(--card);color:var(--ink);position:fixed;bottom:0;top:auto;margin:0 auto}
 dialog.sheet::backdrop{background:rgba(10,8,6,.55)}
 .sheet-handle{width:36px;height:4px;border-radius:99px;background:var(--line);margin:0 auto 14px}
-.sheet-title{font-size:15.5px;font-weight:800;margin-bottom:14px}
+.sheet-title{font-size:15.5px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sheet-x{flex:0 0 auto;width:28px;height:28px;border-radius:50%;border:none;background:var(--chip);color:var(--sub);font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
 .sheet-label{display:block;font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:5px}
 .sheet-label .optional{font-weight:500;text-transform:none;color:var(--sub)}
 .sheet-input{width:100%;font:15px/1.2 inherit;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--paper);color:var(--ink);margin-bottom:14px}
@@ -322,7 +331,7 @@ try {
     <img src="assets/sunburst-icon.png" alt="" aria-hidden="true">
     <p class="sidebarTitle">District Texter</p>
   </div>
-  <button class="districtStat" id="districtStatBtnSide"><span class="districtStatText"></span><span class="chev">›</span></button>
+  <button class="districtStat" id="districtStatBtnSide"><div class="districtStatFill"></div><span class="districtStatText"></span><span class="chev">›</span></button>
   <nav class="sidebarNav" aria-label="Main">
     <button data-page="pageSend" class="on"><span class="ic">💬</span><span class="navtext"><b>Send</b><small>Pick people, start texting</small></span></button>
     <button data-page="pageSetup"><span class="ic">⚙️</span><span class="navtext"><b>Setup</b><small>Report paste &amp; templates</small></span></button>
@@ -337,7 +346,7 @@ try {
 <div class="appMain">
 <header class="app on-send" id="appHeader">
   <div class="brand"><img class="mark" src="assets/sunburst-icon.png" alt="" aria-hidden="true"><h1>District Texter</h1><span class="day" id="dayLabel"></span></div>
-  <button class="districtStat" id="districtStatBtnTop"><span class="districtStatText"></span><span class="chev">›</span></button>
+  <button class="districtStat" id="districtStatBtnTop"><div class="districtStatFill"></div><span class="districtStatText"></span><span class="chev">›</span></button>
   <div id="sendHeaderControls">
     <div class="seg" id="modeSeg">
       <button data-mode="openers" class="on">☀️&nbsp; Openers</button>
@@ -551,20 +560,30 @@ try {
 
 <dialog id="districtStatsDlg" class="sheet">
   <div class="sheet-handle"></div>
-  <div class="sheet-title">District stats — <span id="districtStatsDay"></span></div>
+  <div class="sheet-title">District stats — <span id="districtStatsDay"></span><button class="sheet-x" id="districtStatsCloseX" aria-label="Close">✕</button></div>
   <div class="sheet-body">
+    <div class="statHero">
+      <div class="statHeroPct" id="districtStatsPct"></div>
+      <div class="statHeroSub" id="districtStatsSub"></div>
+      <div class="statBar"><div class="statBarFill" id="districtStatsBarFill"></div></div>
+      <div class="statBarLabels"><span id="districtStatsSoldLabel"></span><span id="districtStatsLyLabel"></span></div>
+    </div>
     <div class="statsGrid" id="districtStatsGrid"></div>
-    <div class="statsStoreHead">By store</div>
-    <div id="districtStatsStores"></div>
   </div>
   <button class="sheet-cancel" id="districtStatsCloseBtn">Close</button>
 </dialog>
 
 <dialog id="storeStatsDlg" class="sheet">
   <div class="sheet-handle"></div>
-  <div class="sheet-title" id="storeStatsMall"></div>
+  <div class="sheet-title"><span id="storeStatsMall"></span><button class="sheet-x" id="storeStatsCloseX" aria-label="Close">✕</button></div>
   <div class="sheet-body">
-    <div class="statsGrid" id="storeStatsGrid"></div>
+    <div class="statHero">
+      <div class="statHeroPct" id="storeStatsPct"></div>
+      <div class="statHeroSub" id="storeStatsSub"></div>
+      <div class="statBar"><div class="statBarFill" id="storeStatsBarFill"></div></div>
+      <div class="statBarLabels"><span id="storeStatsSoldLabel"></span><span id="storeStatsTargetLabel"></span></div>
+    </div>
+    <div class="statTiles" id="storeStatsTiles"></div>
   </div>
   <button class="sheet-cancel" id="storeStatsCloseBtn">Close</button>
 </dialog>
@@ -809,54 +828,71 @@ function districtStat(){
 }
 function renderDistrictStat(){
   const d = districtStat();
-  const text = d.pct+'% of LY · $'+Math.abs(d.diff).toLocaleString()+(d.diff>=0?' ahead':' to go');
+  const ahead = d.diff>=0;
+  const text = d.pct+'% of LY · $'+Math.abs(d.diff).toLocaleString()+(ahead?' ahead':' to go');
   document.querySelectorAll('.districtStatText').forEach(el=>el.textContent=text);
+  document.querySelectorAll('.districtStatFill').forEach(el=>{
+    el.style.width = Math.max(0,Math.min(100,d.pct))+'%';
+    el.classList.toggle('ahead', ahead);
+  });
 }
 function openDistrictStats(){
   const d = districtStat();
+  const ahead = d.diff>=0;
   document.getElementById('districtStatsDay').textContent = DAY_FULL[todayIdx];
-  const rows = [
-    ['District sold today', '$'+d.sold.toLocaleString()],
-    ['District LY ('+DAY_KEYS[todayIdx]+')', '$'+d.ly.toLocaleString()],
-    ['% of LY', d.pct+'%'],
-    [d.diff>=0?'Ahead of LY':'Behind LY', '$'+Math.abs(d.diff).toLocaleString()],
-  ];
-  document.getElementById('districtStatsGrid').innerHTML = rows.map(([l,v])=>
-    '<div class="statrow"><span class="statlabel">'+l+'</span><span class="statvalue">'+v+'</span></div>').join('');
-  const storesSorted = data.slice().sort((a,b)=>{
-    const ga = goalInfo(a.mall), gb = goalInfo(b.mall);
-    return (ga.ly - ga.sold) < (gb.ly - gb.sold) ? 1 : -1;
-  });
-  document.getElementById('districtStatsStores').innerHTML = storesSorted.map(s=>{
-    const info = goalInfo(s.mall);
-    const behind = info.sold < info.ly;
-    const numText = behind ? '−$'+(info.ly-info.sold).toLocaleString() : (info.ly ? '✓ +$'+(info.sold-info.ly).toLocaleString() : '✓');
-    return '<div class="storeStatRow'+(behind?' behind':'')+'"><span class="ssName">'+s.mall+'</span>'+
-      '<span class="ssNum">$'+info.sold.toLocaleString()+' <b>'+numText+'</b></span></div>';
-  }).join('');
+  document.getElementById('districtStatsPct').textContent = d.pct+'%';
+  document.getElementById('districtStatsPct').classList.toggle('ahead', ahead);
+  document.getElementById('districtStatsSub').textContent = ahead
+    ? '$'+d.diff.toLocaleString()+' ahead of last year'
+    : '$'+Math.abs(d.diff).toLocaleString()+' to go to match last year';
+  const fill = document.getElementById('districtStatsBarFill');
+  fill.style.width = Math.max(0,Math.min(100,d.pct))+'%';
+  fill.classList.toggle('ahead', ahead);
+  document.getElementById('districtStatsSoldLabel').textContent = 'Sold $'+d.sold.toLocaleString();
+  document.getElementById('districtStatsLyLabel').textContent = 'LY $'+d.ly.toLocaleString();
+  const onTrack = data.filter(s => (Number(todaySales[s.mall])||0) >= ((lyStore[s.mall]||[])[todayIdx]||0)).length;
+  document.getElementById('districtStatsGrid').innerHTML =
+    '<div class="statrow"><span class="statlabel">Stores at or ahead of LY</span><span class="statvalue">'+onTrack+' of '+data.length+'</span></div>';
   document.getElementById('districtStatsDlg').showModal();
 }
 function openStoreStats(mall){
   const info = goalInfo(mall);
+  const target = info.target || 0;
+  const pct = target>0 ? Math.round((info.sold/target)*100) : (info.sold>0?100:0);
+  const ahead = info.hit;
   document.getElementById('storeStatsMall').textContent = mall;
-  const rows = [
-    ['Sold today', '$'+info.sold.toLocaleString()],
-    ['LY ('+DAY_KEYS[todayIdx]+')', '$'+info.ly.toLocaleString()],
-    ['LY average order', info.aov ? '$'+info.aov.toLocaleString() : '—'],
-    ['Minimum goal', '$'+info.floor.toLocaleString()],
-    ['Target today', '$'+info.target.toLocaleString()+(info.floored?' (using minimum)':' (LY)')],
-    [info.hit?'Hit already':'Goal left', '$'+info.goal.toLocaleString()],
-    ['Hours left today', fmtHours(info.hours)],
+  document.getElementById('storeStatsPct').textContent = pct+'%';
+  document.getElementById('storeStatsPct').classList.toggle('ahead', ahead);
+  document.getElementById('storeStatsSub').textContent = ahead
+    ? 'Hit already — $'+(info.sold-target).toLocaleString()+' over'
+    : '$'+info.goal.toLocaleString()+' to go'+(info.floored?' (using minimum)':'');
+  const fill = document.getElementById('storeStatsBarFill');
+  fill.style.width = Math.max(0,Math.min(100,pct))+'%';
+  fill.classList.toggle('ahead', ahead);
+  document.getElementById('storeStatsSoldLabel').textContent = 'Sold $'+info.sold.toLocaleString();
+  document.getElementById('storeStatsTargetLabel').textContent = 'Target $'+target.toLocaleString();
+  const tiles = [
+    ['LY', '$'+info.ly.toLocaleString()],
+    ['AOV', info.aov ? '$'+info.aov.toLocaleString() : '—'],
+    ['Minimum', '$'+info.floor.toLocaleString()],
+    ['Hours left', fmtHours(info.hours)],
     ['Pace needed', '$'+info.perHour.toLocaleString()+'/hr'],
+    ['Status', ahead?'Hit ✓':(info.floored?'Using minimum':'Below LY')],
   ];
-  document.getElementById('storeStatsGrid').innerHTML = rows.map(([l,v])=>
-    '<div class="statrow"><span class="statlabel">'+l+'</span><span class="statvalue">'+v+'</span></div>').join('');
+  document.getElementById('storeStatsTiles').innerHTML = tiles.map(([l,v])=>
+    '<div class="statTile"><span class="stLabel">'+l+'</span><span class="stValue">'+v+'</span></div>').join('');
   document.getElementById('storeStatsDlg').showModal();
 }
 document.getElementById('districtStatBtnTop').addEventListener('click', openDistrictStats);
 document.getElementById('districtStatBtnSide').addEventListener('click', openDistrictStats);
 document.getElementById('districtStatsCloseBtn').addEventListener('click', ()=>document.getElementById('districtStatsDlg').close());
 document.getElementById('storeStatsCloseBtn').addEventListener('click', ()=>document.getElementById('storeStatsDlg').close());
+document.getElementById('districtStatsCloseX').addEventListener('click', ()=>document.getElementById('districtStatsDlg').close());
+document.getElementById('storeStatsCloseX').addEventListener('click', ()=>document.getElementById('storeStatsDlg').close());
+// Click on the backdrop (the dialog element itself, not its content) closes any open sheet.
+document.querySelectorAll('dialog').forEach(dlg=>{
+  dlg.addEventListener('click', (e)=>{ if (e.target===dlg) dlg.close(); });
+});
 
 // ---- Shopify paste import ----
 document.getElementById('todayLabel').textContent = DAY_KEYS[todayIdx];
