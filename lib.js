@@ -282,7 +282,8 @@
   // → { fresh, people: { 'MALL|Name': { roles, start, end } }, unmatched: [{ name, store, roles }] }
   // canonStore maps whatever the schedule calls a store to the app's store name (or null).
   var SCHEDULE_MAX_AGE_MS = 36 * 3600 * 1000;   // older than this and nobody should be pre-ticked from it
-  function planSchedule(doc, stores, canonStore, dateStr, nowMs) {
+  // aliases: { normalizedScheduleName: 'Contacts name' | '-' } — '-' means "not someone we text".
+  function planSchedule(doc, stores, canonStore, dateStr, nowMs, aliases) {
     var res = { fresh: false, people: {}, unmatched: [] };
     if (!doc) return res;
     var shifts = null;
@@ -302,9 +303,11 @@
       if (!store) return;
       storeRoles(byStore[mall]).forEach(function (sh) {
         if (!sh.roles.length) return;   // mid shift: nothing to do
-        var n = normPerson(sh.name), person = null;
-        (store.staff || []).forEach(function (p) { if (!person && sameName(normPerson(p.name), n)) person = p; });
-        if (!person) { res.unmatched.push({ name: sh.name, store: mall, roles: sh.roles }); return; }
+        var n = normPerson(sh.name), person = null, al = aliases && aliases[n];
+        if (al === '-') return;   // marked as someone we don't text
+        if (al) { var an = normPerson(al); (store.staff || []).forEach(function (p) { if (!person && normPerson(p.name) === an) person = p; }); }
+        if (!person) (store.staff || []).forEach(function (p) { if (!person && sameName(normPerson(p.name), n)) person = p; });
+        if (!person) { res.unmatched.push({ name: sh.name, key: n, store: mall, roles: sh.roles }); return; }
         var key = mall + '|' + person.name, cur = res.people[key];
         if (!cur) res.people[key] = { roles: sh.roles.slice(), start: sh.start, end: sh.end };
         else {   // a split shift: keep the widest span and every role

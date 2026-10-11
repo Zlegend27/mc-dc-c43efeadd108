@@ -13,10 +13,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#f2efe5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#110c07" media="(prefers-color-scheme: dark)">
-<meta name="build-date" content="2026-10-11T22:18:39.070Z">
+<meta name="build-date" content="2026-10-11T22:37:37.920Z">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=463d4cc4a5">
+<link rel="stylesheet" href="style.css?v=14f27930da">
 <script>
 /* Apply a saved Light/Dark choice before first paint so there is no flash of the wrong theme. */
 try {
@@ -331,6 +331,15 @@ try {
   </div>
 </dialog>
 
+<dialog id="nameFixDlg" class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Match schedule names<button class="sheet-x" id="nameFixCloseBtn" aria-label="Close">✕</button></div>
+  <div class="sheet-body">
+    <p class="nfHelp">These people are on the Sling schedule but don't match anyone in Contacts. Pick who each one is once and everyone's phone remembers it.</p>
+    <div id="nameFixList"></div>
+  </div>
+</dialog>
+
 <dialog id="historyDlg" class="sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-title">Earlier contact lists<button class="sheet-x" id="historyCloseBtn" aria-label="Close">✕</button></div>
@@ -350,8 +359,8 @@ try {
 
 <div id="undoSnack" class="undosnack" role="status" aria-live="polite"></div>
 
-<script src="lib.js?v=463d4cc4a5"></script>
-<script type="module" src="sync.js?v=463d4cc4a5"></script>
-<script src="app.js?v=463d4cc4a5"></script>
+<script src="lib.js?v=14f27930da"></script>
+<script type="module" src="sync.js?v=14f27930da"></script>
+<script src="app.js?v=14f27930da"></script>
 </body>
 </html>

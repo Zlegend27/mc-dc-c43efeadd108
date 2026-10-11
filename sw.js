@@ -3,7 +3,7 @@
    version. Same-origin files are network-first (fresh whenever there's signal, cached copy when
    there isn't). The Firebase SDK and fonts are stale-while-revalidate. Firestore/Auth API calls
    are never touched. VERSION is stamped by scripts/stamp-build.mjs. */
-const VERSION = '463d4cc4a5';
+const VERSION = '14f27930da';
 const CACHE = 'dt-' + VERSION;
 const SHELL = ['./', 'index.html', 'style.css', 'lib.js', 'sync.js', 'app.js', 'manifest.webmanifest',
   'assets/sunburst-icon.png', 'assets/apple-touch-icon.png'];

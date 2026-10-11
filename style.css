@@ -329,6 +329,13 @@ html{touch-action:manipulation}
 .schedNote{margin:0 14px 12px;padding:9px 12px;border-radius:12px;background:var(--accent-soft);color:var(--ink);font-size:12.5px;font-weight:600;line-height:1.4}
 .schedNote.warn{background:var(--warn-soft);color:var(--warn)}
 .shiftTag{font-size:11.5px;font-weight:700;color:var(--accent);margin-top:2px}
+.schedNote .linkbtn{margin-left:6px;background:none;border:none;padding:6px 2px;font:inherit;font-weight:800;color:inherit;text-decoration:underline;min-height:32px}
+.nfHelp{margin:0 0 10px;font-size:13px;line-height:1.45;color:var(--sub)}
+.nfRow{padding:12px 0;border-bottom:1px solid var(--line)}
+.nfRow:last-child{border-bottom:none}
+.nfName{font-size:14px;font-weight:800}
+.nfName small{display:block;font-weight:500;color:var(--sub);margin-top:2px}
+.nfRow select{width:100%;margin:8px 0 6px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font:inherit}
 @media (pointer:coarse){
   input,select,textarea{font-size:16px !important}
   table.ly input{max-width:64px}

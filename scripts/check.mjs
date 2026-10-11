@@ -158,7 +158,7 @@ test('Last, First / accents / short first names match Contacts', () => {
 });
 test('people not in Contacts are reported, not guessed', () => {
   const r = sch([S('Nobody Known', '09:45', '17:00'), S('Pat Example', '15:00', '20:15')]);
-  eq(r.unmatched, [{ name: 'Nobody Known', store: 'ORLAND SQUARE', roles: ['opener'] }]);
+  eq(r.unmatched, [{ name: 'Nobody Known', key: 'nobody known', store: 'ORLAND SQUARE', roles: ['opener'] }]);
 });
 test("yesterday's schedule is never used for today", () => {
   const r = sch([S('Testa Fake', '09:45', '17:00')], '2026-10-11');
@@ -167,6 +167,26 @@ test("yesterday's schedule is never used for today", () => {
 test('bad times and unknown stores are skipped quietly', () => {
   const r = DT.planSchedule({ date: '2026-10-12', shifts: [S('Testa Fake', 'x', 'y'), { name: 'Pat Example', store: 'MARS', start: '09:00', end: '17:00' }] }, SCH_STORES, (s) => (s === 'ORLAND SQUARE' ? s : null), '2026-10-12');
   eq(Object.keys(r.people).length, 0);
+});
+
+test('a new hire who opens is reported and nobody else is promoted to opener', () => {
+  const doc = { date: '2026-10-12', shifts: [S('Brand New Hire', '09:45', '17:00'), S('Sam Sample', '11:00', '17:00'), S('Pat Example', '15:00', '20:15')] };
+  const r = DT.planSchedule(doc, SCH_STORES, (s) => s, '2026-10-12');
+  eq(r.unmatched.map((u) => [u.name, u.roles]), [['Brand New Hire', ['opener']]]);
+  eq(Object.keys(r.people), ['ORLAND SQUARE|Pat Example']);   // the mid-shift person stays unticked
+});
+test('a saved match links a differently spelled schedule name to the right person', () => {
+  const shifts = [S('Maddy Fakeman', '09:45', '17:00'), S('Pat Example', '15:00', '20:15')];
+  const doc = { date: '2026-10-12', shifts: shifts };
+  const plain = DT.planSchedule(doc, SCH_STORES, (s) => s, '2026-10-12');
+  eq(plain.unmatched.map((u) => [u.name, u.key]), [['Maddy Fakeman', 'maddy fakeman']]);
+  const linked = DT.planSchedule(doc, SCH_STORES, (s) => s, '2026-10-12', 0, { 'maddy fakeman': 'Sam Sample' });
+  eq([Object.keys(linked.people).sort(), linked.unmatched.length], [['ORLAND SQUARE|Pat Example', 'ORLAND SQUARE|Sam Sample'], 0]);
+});
+test('"not someone we text" removes a name from the list without pre-ticking', () => {
+  const doc = { date: '2026-10-12', shifts: [S('Visiting Boss', '09:45', '17:00'), S('Pat Example', '15:00', '20:15')] };
+  const r = DT.planSchedule(doc, SCH_STORES, (s) => s, '2026-10-12', 0, { 'visiting boss': '-' });
+  eq([Object.keys(r.people), r.unmatched.length], [['ORLAND SQUARE|Pat Example'], 0]);
 });
 
 console.log('\nSling feed');

@@ -61,7 +61,7 @@ const K = {
   today: 'districtTexter.today.' + todayDateStr, salesAt: 'districtTexter.salesAt.' + todayDateStr,
   meta: 'districtTexter.salesMeta.' + todayDateStr, tasks: 'districtTexter.tasks.' + todayDateStr,
   texts: 'districtTexter.texts.' + todayDateStr,
-  sched: 'districtTexter.schedule.v1', schedTouched: 'districtTexter.schedTouched.' + todayDateStr
+  sched: 'districtTexter.schedule.v1', slingNames: 'districtTexter.slingNames.v1', schedTouched: 'districtTexter.schedTouched.' + todayDateStr
 };
 
 // Name matching for store names as Shopify spells them. These are consts, so they must be defined
@@ -101,6 +101,7 @@ let todaySales = lsGet(K.today, {});
 let salesAt = lsGet(K.salesAt, {});
 let salesMeta = lsGet(K.meta, {});
 let textLog = lsGet(K.texts, {});
+let slingNames = lsGet(K.slingNames, {});     // schedule name → Contacts name (or '-'), shared by everyone
 let scheduleDoc = lsGet(K.sched, null);      // today's shifts, written by the Sling job
 let schedTouched = lsGet(K.schedTouched, {}); // people the user ticked/unticked by hand today
 let myName = lsStr(K.name);
@@ -439,7 +440,7 @@ function signature() {
     '|' + JSON.stringify(textLog) + '|' + selectedBucket + '|' + (scheduleDoc ? (scheduleDoc.fetchedAt || scheduleDoc.date) : '');
 }
 // ---- who is opening / closing today (from the Sling schedule) ----
-const schedPlan = () => DT.planSchedule(scheduleDoc, data, canonMall, todayDateStr, Date.now());
+const schedPlan = () => DT.planSchedule(scheduleDoc, data, canonMall, todayDateStr, Date.now(), slingNames);
 const schedRole = () => mode === 'closers' ? 'closer' : (mode === 'openers' ? 'opener' : null);
 // Ticks the people the schedule says are opening/closing, except anyone the user already decided about
 // by hand today, anyone without a number, and anyone already texted in this round.
@@ -470,10 +471,22 @@ function updateSchedNote(plan) {
   } else {
     const old = scheduleDoc.fetchedAt && Date.now() - scheduleDoc.fetchedAt > 12 * 3600 * 1000;
     const parts = ['Pre-selected from the Sling schedule' + upd + (old ? ' (may be out of date)' : '') + '. Tap anyone to change.'];
-    const missing = plan.unmatched.filter(u => u.roles.indexOf(schedRole()) >= 0);
-    if (missing.length) parts.push('On the schedule but not in Contacts: ' + missing.slice(0, 3).map(u => DT.titleCase(u.name)).join(', ') + (missing.length > 3 ? ' +' + (missing.length - 3) + ' more' : '') + '.');
-    el.className = 'schedNote';
+    const role = schedRole();
+    const list = (names) => names.slice(0, 3).join(', ') + (names.length > 3 ? ' +' + (names.length - 3) + ' more' : '');
+    // New hires: on the schedule but not in Contacts yet, or in Contacts without a number.
+    const missing = plan.unmatched.filter(u => u.roles.indexOf(role) >= 0).map(u => DT.titleCase(u.name));
+    const noPhone = Object.keys(plan.people).filter(id => plan.people[id].roles.indexOf(role) >= 0).map(id => {
+      const cut = id.indexOf('|'), store = data.find(s => s.mall === id.slice(0, cut)), p = store && store.staff.find(x => x.name === id.slice(cut + 1));
+      return p && !p.phone ? DT.titleCase(p.name) : null;
+    }).filter(Boolean);
+    if (missing.length) parts.push('⚠ Not in Contacts yet, so they can\'t be texted: ' + list(missing) + '.');
+    if (noPhone.length) parts.push('⚠ No phone number saved for: ' + list(noPhone) + ' — add it in Contacts.');
+    el.className = 'schedNote' + (missing.length || noPhone.length ? ' warn' : '');
     el.textContent = parts.join(' ');
+    if (plan.unmatched.length) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'linkbtn'; b.id = 'fixNamesBtn'; b.textContent = 'Fix names';
+      el.appendChild(b);
+    }
   }
   el.hidden = false;
 }
@@ -1106,6 +1119,39 @@ function applyDayDoc(d) {
   saveSales();
   if (changed) { renderLive(); renderToday(); }
 }
+// ---- matching schedule names to Contacts ----
+function renderNameFix() {
+  const plan = schedPlan(), el = $('nameFixList');
+  if (!plan.unmatched.length) { el.innerHTML = '<div class="cc-empty">Every name on today\'s schedule is matched. 🎉</div>'; return; }
+  el.innerHTML = plan.unmatched.map((u, i) => {
+    const store = data.find(s => s.mall === u.store), staff = store ? store.staff : [];
+    const roles = u.roles.map(r => r === 'opener' ? 'opening' : 'closing').join(' + ');
+    return '<div class="nfRow"><div class="nfName">' + esc(DT.titleCase(u.name)) + '<small>' + esc(u.store) + ' · ' + esc(roles) + '</small></div>' +
+      '<select data-nf-key="' + esc(u.key) + '" aria-label="Who is ' + esc(u.name) + '?"><option value="">Who is this in Contacts?</option>' +
+      staff.map(p => '<option value="' + esc(p.name) + '">' + esc(DT.titleCase(p.name)) + '</option>').join('') +
+      '<option value="-">Not someone we text</option></select>' +
+      '<button type="button" class="btn-clear" data-nf-add="' + i + '">Add to Contacts instead</button></div>';
+  }).join('');
+}
+function openNameFix() { renderNameFix(); $('nameFixDlg').showModal(); }
+document.addEventListener('click', e => { if (e.target.closest && e.target.closest('#fixNamesBtn')) openNameFix(); });
+$('nameFixCloseBtn').addEventListener('click', () => $('nameFixDlg').close());
+$('nameFixList').addEventListener('change', e => {
+  const sel2 = e.target; if (!sel2.matches || !sel2.matches('select[data-nf-key]') || !sel2.value) return;
+  const key = sel2.dataset.nfKey;
+  slingNames[key] = sel2.value; lsSet(K.slingNames, slingNames);
+  const S = sync(); if (S) S.patchSettings({ slingNames: { [key]: sel2.value } }).catch(() => {});
+  render(); renderNameFix();
+});
+$('nameFixList').addEventListener('click', e => {
+  const b = e.target.closest('[data-nf-add]'); if (!b) return;
+  const u = schedPlan().unmatched[Number(b.dataset.nfAdd)]; if (!u) return;
+  $('nameFixDlg').close();
+  openPersonEditor(u.store, null);
+  $('personNameInput').value = DT.titleCase(u.name);
+  $('personPhoneInput').focus();
+});
+
 function applyScheduleDoc(d, meta) {
   if (meta && meta.fromCache && !d) return;   // an empty cache snapshot says nothing
   scheduleDoc = d || null;
@@ -1135,6 +1181,7 @@ function applySettingsDoc(s, meta) {
   Object.keys(s.hours || {}).forEach(m => { if (Array.isArray(s.hours[m]) && JSON.stringify(storeHours[m]) !== JSON.stringify(s.hours[m])) { storeHours[m] = s.hours[m]; changed = true; } });
   Object.keys(s.tz || {}).forEach(m => { if (storeTz[m] !== s.tz[m]) { storeTz[m] = s.tz[m]; changed = true; } });
   Object.keys(s.ignored || {}).forEach(m => { if (!!ignoredStores[m] !== !!s.ignored[m]) { ignoredStores[m] = !!s.ignored[m]; changed = true; } });
+  Object.keys(s.slingNames || {}).forEach(k => { if (slingNames[k] !== s.slingNames[k]) { slingNames[k] = s.slingNames[k]; changed = true; } });
   // First phone to connect seeds anything the shared settings don't have yet (real values only —
   // never the stale built-in defaults, which would overwrite a teammate's real numbers).
   const S = sync();
@@ -1156,7 +1203,7 @@ function applySettingsDoc(s, meta) {
     if (Object.keys(patch).length) S.patchSettings(patch).catch(() => {});
   }
   if (changed) {
-    saveLy(); saveAov(); lsSet(K.hours, storeHours); lsSet(K.tz, storeTz); lsSet(K.ignored, ignoredStores);
+    saveLy(); saveAov(); lsSet(K.hours, storeHours); lsSet(K.tz, storeTz); lsSet(K.ignored, ignoredStores); lsSet(K.slingNames, slingNames);
     for (let i = data.length - 1; i >= 0; i--) if (isHiddenName(data[i].mall)) data.splice(i, 1);
     renderLive(); renderContacts(); renderToday();
   }
