@@ -31,7 +31,7 @@ let mode = 'openers'; // 'openers' | 'closers' | 'lowsales'
     const cut = localDateStr(cutoff);
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const k = localStorage.key(i);
-      const m = k && k.match(/^districtTexter\.(today|tasks|salesAt|salesMeta|texts)\.(\d{4}-\d{2}-\d{2})$/);
+      const m = k && k.match(/^districtTexter\.(today|tasks|salesAt|salesMeta|texts|schedTouched)\.(\d{4}-\d{2}-\d{2})$/);
       if (m && m[2] < cut) localStorage.removeItem(k);
     }
   } catch (e) { /* ignore */ }
@@ -60,7 +60,8 @@ const K = {
   name: 'districtTexter.myName.v1', theme: 'districtTexter.theme.v1', seeded: 'districtTexter.settingsSeeded.v1',
   today: 'districtTexter.today.' + todayDateStr, salesAt: 'districtTexter.salesAt.' + todayDateStr,
   meta: 'districtTexter.salesMeta.' + todayDateStr, tasks: 'districtTexter.tasks.' + todayDateStr,
-  texts: 'districtTexter.texts.' + todayDateStr
+  texts: 'districtTexter.texts.' + todayDateStr,
+  sched: 'districtTexter.schedule.v1', schedTouched: 'districtTexter.schedTouched.' + todayDateStr
 };
 
 // Name matching for store names as Shopify spells them. These are consts, so they must be defined
@@ -100,6 +101,8 @@ let todaySales = lsGet(K.today, {});
 let salesAt = lsGet(K.salesAt, {});
 let salesMeta = lsGet(K.meta, {});
 let textLog = lsGet(K.texts, {});
+let scheduleDoc = lsGet(K.sched, null);      // today's shifts, written by the Sling job
+let schedTouched = lsGet(K.schedTouched, {}); // people the user ticked/unticked by hand today
 let myName = lsStr(K.name);
 
 const TASK_DEFS = [
@@ -433,11 +436,59 @@ function inputsHtml(mall) {
 let lastSig = '';
 function signature() {
   return mode + '|' + data.map(s => s.mall + ':' + s.staff.map(p => p.name + '~' + p.phone).join(',')).join('|') +
-    '|' + JSON.stringify(textLog) + '|' + selectedBucket;
+    '|' + JSON.stringify(textLog) + '|' + selectedBucket + '|' + (scheduleDoc ? (scheduleDoc.fetchedAt || scheduleDoc.date) : '');
+}
+// ---- who is opening / closing today (from the Sling schedule) ----
+const schedPlan = () => DT.planSchedule(scheduleDoc, data, canonMall, todayDateStr, Date.now());
+const schedRole = () => mode === 'closers' ? 'closer' : (mode === 'openers' ? 'opener' : null);
+// Ticks the people the schedule says are opening/closing, except anyone the user already decided about
+// by hand today, anyone without a number, and anyone already texted in this round.
+const autoSel = new Set();   // ticks that came from the schedule (so a changed schedule can take them back)
+function applySchedulePreselect(plan) {
+  const role = schedRole();
+  [...autoSel].forEach(id => {
+    const info = plan.fresh && role ? plan.people[id] : null;
+    if (!info || info.roles.indexOf(role) < 0 || schedTouched[mode + '|' + id]) { sel.delete(id); autoSel.delete(id); }
+  });
+  if (!role || !plan.fresh) return;
+  Object.keys(plan.people).forEach(id => {
+    if (plan.people[id].roles.indexOf(role) < 0) return;
+    if (schedTouched[mode + '|' + id]) return;
+    const cut = id.indexOf('|'), mall = id.slice(0, cut), name = id.slice(cut + 1);
+    const store = data.find(s => s.mall === mall), p = store && store.staff.find(x => x.name === name);
+    if (!p || !p.phone || textedInfo(mall, name)) return;
+    sel.add(id); autoSel.add(id);
+  });
+}
+function updateSchedNote(plan) {
+  const el = $('schedNote');
+  if (!scheduleDoc || !schedRole()) { el.hidden = true; return; }
+  const upd = scheduleDoc.fetchedAt ? ' · updated ' + DT.fmtClock(scheduleDoc.fetchedAt) : '';
+  if (!plan.fresh) {
+    el.className = 'schedNote warn';
+    el.textContent = "The Sling schedule hasn't updated for today" + upd + ' — pick people by hand.';
+  } else {
+    const old = scheduleDoc.fetchedAt && Date.now() - scheduleDoc.fetchedAt > 12 * 3600 * 1000;
+    const parts = ['Pre-selected from the Sling schedule' + upd + (old ? ' (may be out of date)' : '') + '. Tap anyone to change.'];
+    const missing = plan.unmatched.filter(u => u.roles.indexOf(schedRole()) >= 0);
+    if (missing.length) parts.push('On the schedule but not in Contacts: ' + missing.slice(0, 3).map(u => DT.titleCase(u.name)).join(', ') + (missing.length > 3 ? ' +' + (missing.length - 3) + ' more' : '') + '.');
+    el.className = 'schedNote';
+    el.textContent = parts.join(' ');
+  }
+  el.hidden = false;
+}
+function shiftTag(info) {
+  if (!info) return '';
+  const o = info.roles.indexOf('opener') >= 0, c = info.roles.indexOf('closer') >= 0;
+  const label = o && c ? '☀️🌙 Opening + closing' : (o ? '☀️ Opening' : '🌙 Closing');
+  return '<div class="shiftTag">' + label + ' · ' + esc(DT.fmtTimeLabel(info.start) + '–' + DT.fmtTimeLabel(info.end)) + '</div>';
 }
 function render() {
   list.innerHTML = '';
   const known = new Set();
+  const plan = schedPlan();
+  applySchedulePreselect(plan);
+  updateSchedNote(plan);
   data.forEach(s => {
     const el = document.createElement('div');
     el.className = 'store'; el.dataset.mall = s.mall;
@@ -452,11 +503,14 @@ function render() {
       row.setAttribute('role', 'checkbox'); row.setAttribute('aria-checked', sel.has(id) ? 'true' : 'false'); row.tabIndex = p.phone ? 0 : -1;
       const initials = (p.name || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
       const t = textedInfo(s.mall, p.name);
-      row.innerHTML = '<div class="avatar">' + esc(initials) + '</div><div class="pinfo"><div class="nm">' + esc(DT.titleCase(p.name)) + '</div>' +
+      row.innerHTML = '<div class="avatar">' + esc(initials) + '</div><div class="pinfo"><div class="nm">' + esc(DT.titleCase(p.name)) + '</div>' + shiftTag(plan.people[id]) +
         (p.phone ? '<div class="ph">' + esc(DT.prettyPhone(p.phone)) + (t ? ' · <span class="texted">texted ' + esc(DT.fmtClock(t.at)) + (t.by ? ' by ' + esc(t.by) : '') + '</span>' : '') + '</div>' : '') + '</div>' +
         (p.phone ? '' : '<div class="badge">no #</div>') + '<div class="cbx">✓</div>';
       if (p.phone) {
-        const toggle = () => { sel.has(id) ? sel.delete(id) : sel.add(id); row.classList.toggle('sel'); row.setAttribute('aria-checked', sel.has(id)); updateCount(); };
+        const toggle = () => {
+          sel.has(id) ? sel.delete(id) : sel.add(id); row.classList.toggle('sel'); row.setAttribute('aria-checked', sel.has(id)); updateCount();
+          autoSel.delete(id); schedTouched[mode + '|' + id] = true; lsSet(K.schedTouched, schedTouched);   // the user's choice beats the schedule from now on
+        };
         row.addEventListener('click', toggle);
         row.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
       } else { row.style.opacity = .55; }
@@ -551,7 +605,7 @@ function renderFloorLine() {
 document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('#modeSeg button').forEach(x => x.classList.remove('on')); b.classList.add('on');
   mode = b.dataset.mode;
-  sel.clear();
+  sel.clear(); autoSel.clear();
   const isLow = mode === 'lowsales';
   todaySummaryBtn.style.display = isLow ? 'none' : 'flex';
   $('floorlineLow').style.display = isLow ? 'flex' : 'none';
@@ -1052,6 +1106,12 @@ function applyDayDoc(d) {
   saveSales();
   if (changed) { renderLive(); renderToday(); }
 }
+function applyScheduleDoc(d, meta) {
+  if (meta && meta.fromCache && !d) return;   // an empty cache snapshot says nothing
+  scheduleDoc = d || null;
+  lsSet(K.sched, scheduleDoc);
+  renderLive();
+}
 function applyRosterDoc(stores, meta) {
   if (meta && meta.fromCache && (!stores || !stores.length)) return;
   data.length = 0;
@@ -1113,6 +1173,7 @@ function bootSync() {
   unsubs.push(S.onDay(todayDateStr, applyDayDoc));
   unsubs.push(S.onRoster(applyRosterDoc));
   unsubs.push(S.onSettings(applySettingsDoc));
+  if (S.onSchedule) unsubs.push(S.onSchedule(applyScheduleDoc));
 }
 async function submitPasscode() {
   const val = $('passInput').value.trim();
@@ -1164,5 +1225,5 @@ checkForUpdate(false);
 window.DTApp = { data, get todaySales() { return todaySales; }, get lyStore() { return lyStore; }, get storeTz() { return storeTz; },
   get ignoredStores() { return ignoredStores; }, get textLog() { return textLog; }, get teamTasks() { return teamTasks; },
   planReport, commitPlan, applyReportText, goalInfo, hoursLeftFor, render, renderLive, canonMall, isHiddenName,
-  applyDayDoc, applyRosterDoc, applySettingsDoc, openStoreStats, openDistrictStats };
+  applyDayDoc, applyRosterDoc, applySettingsDoc, applyScheduleDoc, schedPlan, openStoreStats, openDistrictStats };
 })();

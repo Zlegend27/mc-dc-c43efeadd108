@@ -131,3 +131,36 @@ passcode, and the database refuses everyone else.
 
 Doing step 5 before everyone has entered the passcode just leaves those phones working on
 their own until they do — nothing is lost — but it will look like sync is broken.
+
+## Automatic openers/closers from Sling (optional)
+
+A small job copies the Sling schedule into the database every 20 minutes. The Send tab then
+opens with today's openers (Openers) or closers (Closers) already ticked, and anyone can still
+be changed by hand.
+
+How it decides: at each store the earliest shift(s) open it and the latest-ending shift(s)
+close it; anything in between (a weekend mid shift) is left alone. Zoom meetings and corporate
+visits are ignored. People are matched to Contacts by name — "Last, First", accents and short
+forms like Jen/Jennifer are fine; anyone it can't match is listed on the Send tab.
+
+One-time setup:
+
+1. **Get the link.** In Sling on a computer: **Schedule → calendar icon (Sync to calendar apps)**,
+   choose the full schedule and all stores, and copy the link. It needs a Premium or Business
+   plan. Treat the link like a password: anyone who has it can read the schedule.
+2. **Save two secrets in GitHub.** Open the repository → **Settings → Secrets and variables →
+   Actions → New repository secret**, and add:
+   - `SLING_ICS_URL` — the link from step 1
+   - `TEAM_PASSCODE` — the team passcode from "Stronger protection" above
+3. **Run it once.** **Actions → Sync Sling schedule → Run workflow**. A green check means the
+   schedule is saved; the app picks it up within seconds.
+
+Good to know:
+
+- The job's log is public (the repository is public), so it only prints counts — never names.
+- If Sling or the job stops working, the app tells you ("The Sling schedule hasn't updated…") and
+  you pick people by hand as before. Nothing else is affected.
+- If you reset the link in Sling, update the `SLING_ICS_URL` secret.
+- Stores that aren't in the Sling feed simply get no pre-selection.
+- GitHub pauses scheduled jobs after 60 days of repository inactivity. The job pushes a tiny
+  note to a side branch each Monday to prevent that; if it ever stops, use **Actions → Enable**.

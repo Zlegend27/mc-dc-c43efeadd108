@@ -39,7 +39,7 @@ function makeStub(reason) {
   return {
     configured: false, status: 'local', reason: reason || '', ns: NS, needsPasscode: false,
     onStatus(cb) { cb('local'); return () => {}; },
-    onDay: noop, onRoster: noop, onSettings: noop,
+    onDay: noop, onRoster: noop, onSettings: noop, onSchedule: noop,
     setSalesBatch() {}, setTask() {}, logText() {}, patchSettings() {},
     rosterOp() { return Promise.resolve({ queued: false }); },
     getRosterHistory() { return Promise.resolve([]); },
@@ -204,6 +204,9 @@ if (!FIREBASE_CONFIG.projectId) {
       const s = await getDoc(ref('roster', 'history'));
       return s.exists() ? (s.data().versions || []) : [];
     };
+
+    // ---- today's staff schedule (written by the Sling job, read-only here) ----
+    api.onSchedule = (cb, onErr) => listen(ref('roster', 'schedule'), (d, m) => cb(d || null, m), onErr);
 
     // ---- shared settings (LY, AOV, hours, time zones, hidden stores) ----
     api.onSettings = (cb, onErr) => listen(ref('roster', 'settings'), (d, m) => cb(d || {}, m), onErr);

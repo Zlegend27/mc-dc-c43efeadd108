@@ -1,0 +1,45 @@
+name: Sync Sling schedule
+
+# Every 20 minutes, copy the Sling schedule into Firebase so the app can pre-select who is opening
+# and closing. Needs two repository secrets: SLING_ICS_URL and TEAM_PASSCODE (see
+# firebase-sync/SETUP.md). The logs of this public repo are public, so the script prints counts only.
+on:
+  schedule:
+    - cron: '*/20 * * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # only used by the weekly keep-alive push below
+
+concurrency:
+  group: sling-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy the schedule into Firebase
+        env:
+          SLING_ICS_URL: ${{ secrets.SLING_ICS_URL }}
+          TEAM_PASSCODE: ${{ secrets.TEAM_PASSCODE }}
+        run: node scripts/sling-sync.mjs
+
+      # GitHub switches scheduled workflows off after 60 days without repository activity. A tiny
+      # push to a side branch each Monday keeps this one running (it does not touch the live site).
+      - name: Weekly keep-alive
+        if: ${{ github.event_name == 'schedule' }}
+        run: |
+          if [ "$(date -u +%u%H)" = "112" ] && [ "$(date -u +%M)" -lt 20 ]; then
+            git config user.name "sling-sync"
+            git config user.email "sling-sync@users.noreply.github.com"
+            git checkout -q --orphan keepalive
+            git rm -rf -q .
+            date -u > keepalive.txt
+            git add keepalive.txt
+            git commit -q -m "keep-alive $(date -u +%F)"
+            git push -q -f origin keepalive
+          fi

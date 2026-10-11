@@ -16,7 +16,7 @@ live team sync through Firebase. Setup for the shared backend is in
 | `app.js` | the app itself: screens, state, wiring |
 | `sw.js`, `manifest.webmanifest`, `assets/` | offline support and Home Screen install |
 | `opener-texter.html` | redirect so old Home Screen shortcuts keep working |
-| `scripts/` | dev tooling (below) |
+| `scripts/` | dev tooling (below), plus `sling-sync.mjs` / `sling-lib.mjs` which copy the Sling schedule into Firebase (run by `.github/workflows/sling-sync.yml`) |
 
 ## Working on it
 
@@ -49,6 +49,7 @@ in the Firebase console.
 - `roster/current` — stores and staff. Edited by small per-person/per-store transactions.
 - `roster/history` — last 10 roster versions (Contacts → Earlier versions).
 - `roster/settings` — LY, AOV, store hours, store time zones, hidden stores.
+- `roster/schedule` — the next few days of Sling shifts in store-local time, written by the Sling job and read-only in the app.
 
 Message wording, minimum goals, the low-sales threshold, theme and name stay on each phone on
 purpose.

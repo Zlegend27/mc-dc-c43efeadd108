@@ -4,6 +4,7 @@ import { createRequire } from 'module';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import * as SL from './sling-lib.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(here, '..');
@@ -128,6 +129,89 @@ test('newer stamp wins on merge', () => {
   const local = { A: 100, B: 5 }, la = { A: 50, B: 90 };
   const ch = DT.mergeStamped(local, la, { A: 120, B: 7 }, { A: 60, B: 80 });
   eq(local, { A: 120, B: 5 }); eq(ch, ['A']);
+});
+
+console.log('\nSchedule (who opens / closes)');
+const SCH_STORES = [{ mall: 'ORLAND SQUARE', staff: [{ name: 'Testa Fake' }, { name: 'Sam Sample' }, { name: 'José García' }, { name: 'Jennifer Example' }, { name: 'Pat Example' }] }];
+const sch = (shifts, date) => DT.planSchedule({ date: date || '2026-10-12', shifts: shifts }, SCH_STORES, (s) => s, '2026-10-12');
+const S = (name, start, end) => ({ name: name, store: 'ORLAND SQUARE', start: start, end: end });
+test('earliest shift opens, latest closes, mid shift is ignored', () => {
+  const r = sch([S('Testa Fake', '09:45', '18:00'), S('Sam Sample', '11:00', '17:00'), S('Pat Example', '13:00', '20:15')]);
+  eq(r.people['ORLAND SQUARE|Testa Fake'].roles, ['opener']);
+  eq(r.people['ORLAND SQUARE|Pat Example'].roles, ['closer']);
+  eq(r.people['ORLAND SQUARE|Sam Sample'], undefined);
+});
+test('no shift near 10am: the earliest shift is still the opener', () => {
+  const r = sch([S('Sam Sample', '12:00', '18:00'), S('Pat Example', '14:00', '20:15')]);
+  eq(r.people['ORLAND SQUARE|Sam Sample'].roles, ['opener']);
+});
+test('two people starting together both open', () => {
+  const r = sch([S('Testa Fake', '09:45', '17:00'), S('Sam Sample', '10:00', '17:00'), S('Pat Example', '15:00', '20:15')]);
+  eq(Object.keys(r.people).filter(k => r.people[k].roles.indexOf('opener') >= 0).sort(), ['ORLAND SQUARE|Sam Sample', 'ORLAND SQUARE|Testa Fake']);
+});
+test('one person all day both opens and closes', () => {
+  eq(sch([S('Testa Fake', '09:45', '20:15')]).people['ORLAND SQUARE|Testa Fake'].roles, ['opener', 'closer']);
+});
+test('Last, First / accents / short first names match Contacts', () => {
+  const r = sch([S('Garcia, Jose', '09:45', '17:00'), S('Jen Example', '15:00', '20:15')]);
+  eq(Object.keys(r.people).sort(), ['ORLAND SQUARE|Jennifer Example', 'ORLAND SQUARE|José García']);
+});
+test('people not in Contacts are reported, not guessed', () => {
+  const r = sch([S('Nobody Known', '09:45', '17:00'), S('Pat Example', '15:00', '20:15')]);
+  eq(r.unmatched, [{ name: 'Nobody Known', store: 'ORLAND SQUARE', roles: ['opener'] }]);
+});
+test("yesterday's schedule is never used for today", () => {
+  const r = sch([S('Testa Fake', '09:45', '17:00')], '2026-10-11');
+  eq([r.fresh, Object.keys(r.people).length], [false, 0]);
+});
+test('bad times and unknown stores are skipped quietly', () => {
+  const r = DT.planSchedule({ date: '2026-10-12', shifts: [S('Testa Fake', 'x', 'y'), { name: 'Pat Example', store: 'MARS', start: '09:00', end: '17:00' }] }, SCH_STORES, (s) => (s === 'ORLAND SQUARE' ? s : null), '2026-10-12');
+  eq(Object.keys(r.people).length, 0);
+});
+
+console.log('\nSling feed');
+const ICS = [
+  'BEGIN:VCALENDAR', 'VERSION:2.0',
+  'BEGIN:VEVENT', 'SUMMARY:Testa Fake - STORE MANAGER - TOWSON STORE', ' \u2764\uFE0F', 'DTSTART:20261012T134500Z', 'DTEND:20261012T200000Z',
+  'LOCATION:825 Example Rd\\, Towson\\, MD 21204', 'END:VEVENT',
+  'BEGIN:VEVENT', 'SUMMARY:Sam Sample - INSPIRATION NATION TEAM - ORLAND SQUARE', 'DTSTART:20261012T144500Z', 'DTEND:20261013T011500Z',
+  'LOCATION:1 Example Way\\, Orland Park\\, IL 60462', 'END:VEVENT',
+  'BEGIN:VEVENT', 'SUMMARY:Pat Example - ZOOM MEETING - INSPIRATION CO - ORLAND SQUARE', 'DTSTART:20261012T150000Z', 'DTEND:20261012T160000Z', 'LOCATION:', 'END:VEVENT',
+  'BEGIN:VEVENT', 'SUMMARY:Jo Example - CORPORATE REP - GURNEE MILLS', 'DTSTART:20261012T150000Z', 'DTEND:20261012T200000Z', 'LOCATION:', 'END:VEVENT',
+  'BEGIN:VEVENT', 'SUMMARY:Empty Event - STORE MANAGER - TOWSON STORE', 'DTSTART:20261012T150000Z', 'DTEND:20261012T150000Z', 'LOCATION:', 'END:VEVENT',
+  'END:VCALENDAR'
+].join('\r\n');
+test('feed parses; folded lines, escaped commas and empty events handled', () => {
+  const r = SL.parseIcs(ICS);
+  eq([r.events.length, r.skipped], [4, 1]);
+  eq(r.events[0].location, '825 Example Rd, Towson, MD 21204');
+});
+test('store labels lose emoji and district tags', () => {
+  eq(SL.cleanStore('TOWSON STORE\u2764\uFE0F\u200D\uD83D\uDD25'), 'TOWSON STORE');
+  eq(SL.cleanStore('KING OF PRUSSIA STORE\uD83D\uDC51D2'), 'KING OF PRUSSIA STORE');
+  eq(SL.cleanStore('INSPIRATION CO - ORLAND SQUARE'), 'ORLAND SQUARE');
+});
+test('shift times are converted to each store\'s own clock (DST aware)', () => {
+  const { days } = SL.buildDays(SL.parseIcs(ICS).events, '2026-10-12', { daysBack: 0, daysAhead: 1 });
+  const d = days['2026-10-12'];
+  eq(d.map((s) => [s.store, s.start, s.end]).sort(), [['ORLAND SQUARE', '09:45', '20:15'], ['TOWSON STORE', '09:45', '16:00']]);
+  const winter = SL.localParts(new Date('2026-12-05T14:45:00Z'), 'America/Chicago');
+  eq(winter, { date: '2026-12-05', time: '08:45' });
+});
+test('zoom meetings and corporate visits are not shifts', () => {
+  const { stats } = SL.buildDays(SL.parseIcs(ICS).events, '2026-10-12', { daysBack: 0, daysAhead: 0 });
+  eq([stats.shifts, stats.notShift], [2, 2]);
+  eq([SL.isShiftPosition('INSPIRATION NATION TEAM IN TRAINING'), SL.isShiftPosition('STORE MANAGER IN TRAINING')], [true, true]);
+});
+test('Firestore REST encoding', () => {
+  eq(SL.toFirestoreValue({ a: 1, b: ['x', { c: true }] }), { mapValue: { fields: { a: { integerValue: '1' }, b: { arrayValue: { values: [{ stringValue: 'x' }, { mapValue: { fields: { c: { booleanValue: true } } } }] } } } } });
+});
+test('app reads the multi-day document, and ignores one that is too old', () => {
+  const doc = { fetchedAt: 1000000, days: { '2026-10-12': [{ name: 'Testa Fake', store: 'ORLAND SQUARE', start: '09:45', end: '20:15' }] } };
+  const stores = [{ mall: 'ORLAND SQUARE', staff: [{ name: 'Testa Fake' }] }];
+  eq(Object.keys(DT.planSchedule(doc, stores, (s) => s, '2026-10-12', 1000000 + 3600e3).people), ['ORLAND SQUARE|Testa Fake']);
+  eq(DT.planSchedule(doc, stores, (s) => s, '2026-10-12', 1000000 + 40 * 3600e3).fresh, false);
+  eq(DT.planSchedule(doc, stores, (s) => s, '2026-10-13', 1000000).fresh, false);
 });
 
 console.log('\nRepo hygiene');

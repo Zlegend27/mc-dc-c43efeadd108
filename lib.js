@@ -238,6 +238,85 @@
   }
   function bucketForIdx(i) { return i === 5 ? 'sat' : (i === 4 || i === 6) ? 'frisun' : 'monthu'; }
 
+  // ---------- schedule: who opens, who closes ----------
+  // The Sling job writes { fetchedAt, days: { 'YYYY-MM-DD': [{ name, store, start:'HH:MM', end:'HH:MM' }] } }
+  // with times in each store's own local time. (An older single-day { date, shifts } form still works.) Rules: the earliest shift(s) at a store open it, the latest-ending
+  // shift(s) close it, and anything in between (a mid shift) gets no text.
+  function toMin(t) {
+    var m = /^(\d{1,2}):(\d{2})/.exec(String(t == null ? '' : t));
+    return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : NaN;
+  }
+  function normPerson(n) {
+    var s = String(n == null ? '' : n).trim();
+    if (s.indexOf(',') > 0) { var p = s.split(','); s = (p.slice(1).join(' ') + ' ' + p[0]).trim(); }   // "Last, First"
+    var d = s.normalize ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : s;
+    return d.toLowerCase().replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  function sameName(a, b) {
+    if (!a || !b) return false;
+    if (a === b) return true;
+    var A = a.split(' '), B = b.split(' ');
+    if (A.length < 2 || B.length < 2 || A[A.length - 1] !== B[B.length - 1]) return false;
+    var fa = A[0], fb = B[0];   // same last name, and one first name is a short form of the other (Jen / Jennifer)
+    return fa.length >= 2 && fb.length >= 2 && (fa.indexOf(fb) === 0 || fb.indexOf(fa) === 0);
+  }
+  // Shifts at ONE store → the same shifts tagged with roles. tolerance is minutes.
+  function storeRoles(shifts, tolerance) {
+    var tol = tolerance == null ? 30 : tolerance;
+    var ok = (shifts || []).map(function (s) {
+      var a = toMin(s.start), b = toMin(s.end);
+      if (isNaN(a) || isNaN(b)) return null;
+      if (b <= a) b += 1440;
+      return { name: s.name, start: s.start, end: s.end, a: a, b: b };
+    }).filter(Boolean);
+    if (!ok.length) return [];
+    var first = Math.min.apply(null, ok.map(function (s) { return s.a; }));
+    var last = Math.max.apply(null, ok.map(function (s) { return s.b; }));
+    return ok.map(function (s) {
+      var roles = [];
+      if (s.a <= first + tol) roles.push('opener');
+      if (s.b >= last - tol) roles.push('closer');
+      return { name: s.name, start: s.start, end: s.end, roles: roles };
+    });
+  }
+  // → { fresh, people: { 'MALL|Name': { roles, start, end } }, unmatched: [{ name, store, roles }] }
+  // canonStore maps whatever the schedule calls a store to the app's store name (or null).
+  var SCHEDULE_MAX_AGE_MS = 36 * 3600 * 1000;   // older than this and nobody should be pre-ticked from it
+  function planSchedule(doc, stores, canonStore, dateStr, nowMs) {
+    var res = { fresh: false, people: {}, unmatched: [] };
+    if (!doc) return res;
+    var shifts = null;
+    if (doc.days && typeof doc.days === 'object') shifts = Array.isArray(doc.days[dateStr]) ? doc.days[dateStr] : null;
+    else if (Array.isArray(doc.shifts) && doc.date === dateStr) shifts = doc.shifts;
+    if (!shifts) return res;
+    if (nowMs && doc.fetchedAt && nowMs - doc.fetchedAt > SCHEDULE_MAX_AGE_MS) return res;
+    res.fresh = true;
+    var byStore = {};
+    shifts.forEach(function (s) {
+      var mall = canonStore ? canonStore(s.store) : s.store;
+      if (mall) (byStore[mall] = byStore[mall] || []).push(s);
+    });
+    Object.keys(byStore).forEach(function (mall) {
+      var store = null;
+      (stores || []).forEach(function (m) { if (!store && m.mall === mall) store = m; });
+      if (!store) return;
+      storeRoles(byStore[mall]).forEach(function (sh) {
+        if (!sh.roles.length) return;   // mid shift: nothing to do
+        var n = normPerson(sh.name), person = null;
+        (store.staff || []).forEach(function (p) { if (!person && sameName(normPerson(p.name), n)) person = p; });
+        if (!person) { res.unmatched.push({ name: sh.name, store: mall, roles: sh.roles }); return; }
+        var key = mall + '|' + person.name, cur = res.people[key];
+        if (!cur) res.people[key] = { roles: sh.roles.slice(), start: sh.start, end: sh.end };
+        else {   // a split shift: keep the widest span and every role
+          sh.roles.forEach(function (r) { if (cur.roles.indexOf(r) < 0) cur.roles.push(r); });
+          if (toMin(sh.start) < toMin(cur.start)) cur.start = sh.start;
+          if (toMin(sh.end) > toMin(cur.end)) cur.end = sh.end;
+        }
+      });
+    });
+    return res;
+  }
+
   // ---------- shared roster ----------
   function cleanPerson(p) {
     var o = { name: String(p && p.name || '').trim(), phone: digitsOnly(p && p.phone) };
@@ -296,7 +375,8 @@
     looksLikeHeader: looksLikeHeader, detectColumns: detectColumns, readReport: readReport,
     computeGoal: computeGoal, DEFAULT_CLOSE: DEFAULT_CLOSE, defaultTzFor: defaultTzFor, TZ_CHOICES: TZ_CHOICES,
     zoneClock: zoneClock, hoursLeft: hoursLeft, bucketForIdx: bucketForIdx, applyRosterOp: applyRosterOp,
-    countPeople: countPeople, mergeStamped: mergeStamped
+    countPeople: countPeople, mergeStamped: mergeStamped,
+    normPerson: normPerson, storeRoles: storeRoles, planSchedule: planSchedule
   };
   root.DT = API;
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
