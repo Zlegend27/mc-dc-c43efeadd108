@@ -449,11 +449,11 @@ function applySchedulePreselect(plan) {
   const role = schedRole();
   [...autoSel].forEach(id => {
     const info = plan.fresh && role ? plan.people[id] : null;
-    if (!info || info.roles.indexOf(role) < 0 || schedTouched[mode + '|' + id]) { sel.delete(id); autoSel.delete(id); }
+    if (!DT.preselectFor(info, role) || schedTouched[mode + '|' + id]) { sel.delete(id); autoSel.delete(id); }
   });
   if (!role || !plan.fresh) return;
   Object.keys(plan.people).forEach(id => {
-    if (plan.people[id].roles.indexOf(role) < 0) return;
+    if (!DT.preselectFor(plan.people[id], role)) return;
     if (schedTouched[mode + '|' + id]) return;
     const cut = id.indexOf('|'), mall = id.slice(0, cut), name = id.slice(cut + 1);
     const store = data.find(s => s.mall === mall), p = store && store.staff.find(x => x.name === name);
@@ -479,6 +479,10 @@ function updateSchedNote(plan) {
       const cut = id.indexOf('|'), store = data.find(s => s.mall === id.slice(0, cut)), p = store && store.staff.find(x => x.name === id.slice(cut + 1));
       return p && !p.phone ? DT.titleCase(p.name) : null;
     }).filter(Boolean);
+    if (role === 'closer') {
+      const both = Object.keys(plan.people).filter(id => plan.people[id].roles.indexOf('opener') >= 0 && plan.people[id].roles.indexOf('closer') >= 0).map(id => DT.titleCase(id.slice(id.indexOf('|') + 1)));
+      if (both.length) parts.push('Also opening today, so not pre-selected here: ' + list(both) + '.');
+    }
     if (missing.length) parts.push('⚠ Not in Contacts yet, so they can\'t be texted: ' + list(missing) + '.');
     if (noPhone.length) parts.push('⚠ No phone number saved for: ' + list(noPhone) + ' — add it in Contacts.');
     el.className = 'schedNote' + (missing.length || noPhone.length ? ' warn' : '');

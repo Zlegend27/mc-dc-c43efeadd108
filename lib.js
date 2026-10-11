@@ -279,6 +279,13 @@
       return { name: s.name, start: s.start, end: s.end, roles: roles };
     });
   }
+  // Should this person be ticked automatically in this mode? Someone who both opens and closes is
+  // reached in Openers; there is no point texting them the same thing again in Closers.
+  function preselectFor(info, role) {
+    if (!info || !role || (info.roles || []).indexOf(role) < 0) return false;
+    if (role === 'closer' && info.roles.indexOf('opener') >= 0) return false;
+    return true;
+  }
   // → { fresh, people: { 'MALL|Name': { roles, start, end } }, unmatched: [{ name, store, roles }] }
   // canonStore maps whatever the schedule calls a store to the app's store name (or null).
   var SCHEDULE_MAX_AGE_MS = 36 * 3600 * 1000;   // older than this and nobody should be pre-ticked from it
@@ -379,7 +386,7 @@
     computeGoal: computeGoal, DEFAULT_CLOSE: DEFAULT_CLOSE, defaultTzFor: defaultTzFor, TZ_CHOICES: TZ_CHOICES,
     zoneClock: zoneClock, hoursLeft: hoursLeft, bucketForIdx: bucketForIdx, applyRosterOp: applyRosterOp,
     countPeople: countPeople, mergeStamped: mergeStamped,
-    normPerson: normPerson, storeRoles: storeRoles, planSchedule: planSchedule
+    normPerson: normPerson, storeRoles: storeRoles, planSchedule: planSchedule, preselectFor: preselectFor
   };
   root.DT = API;
   if (typeof module !== 'undefined' && module.exports) module.exports = API;

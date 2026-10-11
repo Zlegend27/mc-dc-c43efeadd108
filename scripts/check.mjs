@@ -169,6 +169,12 @@ test('bad times and unknown stores are skipped quietly', () => {
   eq(Object.keys(r.people).length, 0);
 });
 
+test('someone who opens and closes is pre-selected as an opener only', () => {
+  const both = { roles: ['opener', 'closer'] }, closeOnly = { roles: ['closer'] }, openOnly = { roles: ['opener'] };
+  eq([DT.preselectFor(both, 'opener'), DT.preselectFor(both, 'closer')], [true, false]);
+  eq([DT.preselectFor(closeOnly, 'closer'), DT.preselectFor(openOnly, 'opener'), DT.preselectFor(openOnly, 'closer')], [true, true, false]);
+  eq([DT.preselectFor(null, 'closer'), DT.preselectFor(both, null)], [false, false]);
+});
 test('a new hire who opens is reported and nobody else is promoted to opener', () => {
   const doc = { date: '2026-10-12', shifts: [S('Brand New Hire', '09:45', '17:00'), S('Sam Sample', '11:00', '17:00'), S('Pat Example', '15:00', '20:15')] };
   const r = DT.planSchedule(doc, SCH_STORES, (s) => s, '2026-10-12');
