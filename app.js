@@ -338,27 +338,38 @@ function undoPlan(undo) {
 
 function applyReportText(raw) {
   raw = (raw || '').trim();
-  if (!raw) { setPasteMsg('That report looks empty — try again.', 'warn'); return; }
+  if (!raw) { setPasteMsg('That report looks empty — try again.', 'warn'); return false; }
   const plan = planReport(raw);
   if (!plan.rows.length) {
     const why = plan.skipped ? " — that looked like a link, not a report. Copy the report's text, not a download link." : (plan.hidden ? ' — every store in it is hidden.' : " — check it's the right report.");
     setPasteMsg("Couldn't match any stores in that" + why, 'warn');
-    return;
+    return false;
   }
   // Header-less pastes, new stores, suspicious drops: ask first. Everything else applies at once.
   if (plan.warnings.length) {
-    pendingPlan = plan;
+    pendingPlan = plan; pendingPlan.raw = raw;
     $('reportDlgList').innerHTML = plan.warnings.map(w => '<li>' + esc(w) + '</li>').join('');
     $('reportDlgCount').textContent = plan.rows.length + ' store' + (plan.rows.length === 1 ? '' : 's') + ' in this paste';
     $('reportDlg').showModal();
-    return;
+    return false;
   }
   commitPlan(plan);
+  return true;
 }
-$('reportApplyBtn').addEventListener('click', () => { $('reportDlg').close(); if (pendingPlan) { const p = pendingPlan; pendingPlan = null; commitPlan(p); } });
+$('reportApplyBtn').addEventListener('click', () => {
+  $('reportDlg').close();
+  if (pendingPlan) {
+    const p = pendingPlan; pendingPlan = null; commitPlan(p);
+    if ($('pasteBox').value.trim() === p.raw) $('pasteBox').value = '';
+  }
+});
 $('reportCancelBtn').addEventListener('click', () => { pendingPlan = null; $('reportDlg').close(); setPasteMsg('Nothing was changed.', ''); });
 $('clearPaste').addEventListener('click', () => { $('pasteBox').value = ''; setPasteMsg('', ''); });
-$('applyPaste').addEventListener('click', () => applyReportText($('pasteBox').value));
+// The box is emptied once its report goes in, so the next paste can't pile onto the old text.
+$('applyPaste').addEventListener('click', () => {
+  const raw = $('pasteBox').value;
+  if (applyReportText(raw)) $('pasteBox').value = '';
+});
 $('csvFileInput').addEventListener('change', (e) => {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
@@ -757,7 +768,14 @@ function openPersonEditor(mall, person) {
 $('personSaveBtn').addEventListener('click', () => {
   const name = $('personNameInput').value.trim();
   if (!name) { $('personNameInput').focus(); return; }
-  const next = { name: name, phone: currentPhoneDigits(), role: $('personRoleInput').value.trim() };
+  const typed = DT.digitsOnly($('personPhoneInput').value);
+  if (typed && !DT.isValidUsPhone(typed)) {
+    // A half-typed number saved silently would later open Messages with a bogus recipient.
+    const badge = $('phoneValidBadge'); badge.textContent = 'Needs all 10 digits'; badge.className = 'phonebadge warn';
+    $('personPhoneInput').focus();
+    return;
+  }
+  const next ={ name: name, phone: currentPhoneDigits(), role: $('personRoleInput').value.trim() };
   rosterOp({ type: 'upsertPerson', mall: editingMall, match: editingPerson ? { name: editingPerson.name, phone: editingPerson.phone } : { name: next.name, phone: next.phone }, person: next });
   personDlg.close(); render(); renderContacts();
 });
@@ -791,15 +809,17 @@ function commitHours() {
   if (!editingHoursMall) return;
   const d = DT.DEFAULT_CLOSE;
   const mt = $('hoursMonThu').value || d[0], fr = $('hoursFri').value || d[4], sa = $('hoursSat').value || d[5], su = $('hoursSun').value || d[6];
-  storeHours[editingHoursMall] = [mt, mt, mt, mt, fr, sa, su];
-  storeTz[editingHoursMall] = $('hoursTz').value || 'device';
+  const nextHours = [mt, mt, mt, mt, fr, sa, su], nextTz = $('hoursTz').value || 'device';
+  if (JSON.stringify(nextHours) === JSON.stringify(closeTimesFor(editingHoursMall)) && nextTz === tzFor(editingHoursMall)) return;   // nothing changed
+  storeHours[editingHoursMall] = nextHours;
+  storeTz[editingHoursMall] = nextTz;
   lsSet(K.hours, storeHours); lsSet(K.tz, storeTz);
   renderContacts(); refreshCards();
   const S = sync();
   if (S) S.patchSettings({ hours: { [editingHoursMall]: storeHours[editingHoursMall] }, tz: { [editingHoursMall]: storeTz[editingHoursMall] } }).catch(() => {});
 }
 ['hoursMonThu', 'hoursFri', 'hoursSat', 'hoursSun', 'hoursTz'].forEach(id => $(id).addEventListener('change', commitHours));
-$('hoursDoneBtn').addEventListener('click', () => hoursDlg.close());
+$('hoursDoneBtn').addEventListener('click', () => { commitHours(); hoursDlg.close(); });
 
 // ---- add / remove store ----
 const addStoreTile = $('addStoreTile'), addStoreRow = $('addStoreRow');
@@ -989,14 +1009,15 @@ function updateBadges() {
   document.querySelectorAll('.syncbadge').forEach(el => {
     el.textContent = text;
     el.className = 'syncbadge' + (el.classList.contains('teamSyncBadge') ? ' teamSyncBadge' : '') + (cls ? ' ' + cls : '');
-    if (st === 'error' || st === 'offline') el.setAttribute('role', 'button'); else el.removeAttribute('role');
+    if (st === 'error' || st === 'offline' || st === 'needs-passcode') el.setAttribute('role', 'button'); else el.removeAttribute('role');
   });
+  if (typeof maybeAskPasscode === 'function') maybeAskPasscode();
 }
 document.addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('.syncbadge');
   if (!b) return;
   const S = sync(); if (!S) return;
-  if (S.needsPasscode) { $('passDlg').showModal(); return; }
+  if (S.needsPasscode) { if (!$('passDlg').open) $('passDlg').showModal(); return; }
   if (S.status === 'error' || S.status === 'offline') S.retry().then(() => bootSync());
 });
 
@@ -1089,17 +1110,33 @@ function bootSync() {
   if (!S || !S.configured) return;
   if (!statusHooked) { statusHooked = true; S.onStatus(updateBadges); }
   unsubs.forEach(u => { try { u(); } catch (e) { /* ignore */ } }); unsubs = [];
-  if (S.needsPasscode) { $('passDlg').showModal(); return; }
+  if (S.needsPasscode) { if (!$('passDlg').open) $('passDlg').showModal(); return; }
   if (!S.authed) return;
   unsubs.push(S.onDay(todayDateStr, applyDayDoc));
   unsubs.push(S.onRoster(applyRosterDoc));
   unsubs.push(S.onSettings(applySettingsDoc));
 }
-$('passSaveBtn').addEventListener('click', async () => {
-  const ok = await window.districtSync.signInWithPasscode($('passInput').value.trim());
-  $('passMsg').textContent = ok ? '' : "That passcode didn't work — check with whoever manages the team account.";
-  if (ok) { $('passDlg').close(); bootSync(); }
-});
+async function submitPasscode() {
+  const val = $('passInput').value.trim();
+  if (!val) { $('passMsg').textContent = 'Type the team passcode first.'; return; }
+  const btn = $('passSaveBtn'); btn.disabled = true; $('passMsg').textContent = 'Checking…';
+  const S = window.districtSync;
+  const ok = await S.signInWithPasscode(val);
+  btn.disabled = false;
+  const code = S.lastAuthError || '';
+  $('passMsg').textContent = ok ? '' :
+    code === 'auth/network-request-failed' ? "Can't reach the server — check your signal and try again." :
+    code === 'auth/too-many-requests' ? 'Too many tries — wait a few minutes, then try again.' :
+    "That passcode didn't work — check it with whoever manages the team account.";
+  if (ok) { $('passInput').value = ''; $('passDlg').close(); bootSync(); }
+}
+$('passSaveBtn').addEventListener('click', submitPasscode);
+$('passInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); submitPasscode(); } });
+let passShownOnce = false;
+function maybeAskPasscode() {
+  const S = window.districtSync;
+  if (S && S.configured && S.needsPasscode && !passShownOnce && !$('passDlg').open) { passShownOnce = true; $('passDlg').showModal(); }
+}
 window.addEventListener('online', () => {
   const S = sync();
   if (S && !S.authed) S.reconnect().then(() => bootSync());

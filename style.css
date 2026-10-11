@@ -322,3 +322,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .tzLabel{margin-top:14px}
 select.sheet-input{appearance:auto}
 @media (prefers-reduced-motion:reduce){ *{transition:none !important;animation:none !important} }
+
+/* iPhone Safari zooms the page into any field whose text is under 16px, and doesn't zoom back out.
+   Keep every typeable control at 16px on touch screens, and stop double-tap zoom (pinch still works). */
+html{touch-action:manipulation}
+@media (pointer:coarse){
+  input,select,textarea{font-size:16px !important}
+  table.ly input{max-width:64px}
+}

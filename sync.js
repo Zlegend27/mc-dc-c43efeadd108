@@ -24,6 +24,7 @@ const TEAM_AUTH = { enabled: true, email: 'team@districttexter.example' };
 const SDK = 'https://www.gstatic.com/firebasejs/10.13.0/';
 const PENDING_KEY = 'districtTexter.pendingRosterOps.v1';
 const PASS_KEY = 'districtTexter.teamPass.v1';
+const BAD_CREDENTIAL = ['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials', 'auth/user-not-found', 'auth/invalid-email'];
 // Developer-only: set localStorage 'districtTexter.ns' to e.g. "t1-" to point the whole app at
 // throwaway documents (days/t1-2026-01-01, roster/t1-current, …) instead of the real ones.
 let NS = '';
@@ -98,7 +99,15 @@ if (!FIREBASE_CONFIG.projectId) {
       if (TEAM_AUTH.enabled) {
         const pass = lsGet(PASS_KEY, '');
         if (!pass) { api.needsPasscode = true; emit(); return false; }
-        await auth.signInWithEmailAndPassword(authInst, TEAM_AUTH.email, pass);
+        try { await auth.signInWithEmailAndPassword(authInst, TEAM_AUTH.email, pass); }
+        catch (e) {
+          // The saved passcode no longer works (it was changed): ask again instead of failing silently forever.
+          if (BAD_CREDENTIAL.indexOf(e && e.code) >= 0) {
+            try { localStorage.removeItem(PASS_KEY); } catch (x) { /* ignore */ }
+            api.needsPasscode = true; emit(); return false;
+          }
+          throw e;
+        }
       } else {
         await auth.signInAnonymously(authInst);
       }
@@ -108,8 +117,13 @@ if (!FIREBASE_CONFIG.projectId) {
     api.reconnect = async () => { hadError = false; ready = authenticate().catch(err => { hadError = true; return false; }); const ok = await ready; emit(); return ok; };
     api.signInWithPasscode = async (pass) => {
       lsSet(PASS_KEY, pass);
+      api.lastAuthError = '';
       try { await auth.signInWithEmailAndPassword(authInst, TEAM_AUTH.email, pass); api.authed = true; api.needsPasscode = false; hadError = false; emit(); return true; }
-      catch (e) { try { localStorage.removeItem(PASS_KEY); } catch (x) { /* ignore */ } api.needsPasscode = true; emit(); return false; }
+      catch (e) {
+        api.lastAuthError = (e && e.code) || 'unknown';
+        try { localStorage.removeItem(PASS_KEY); } catch (x) { /* ignore */ }
+        api.needsPasscode = true; emit(); return false;
+      }
     };
 
     const ref = (col, id) => doc(db, col, NS + id);
