@@ -19,7 +19,7 @@ const FIREBASE_CONFIG = {
 
 // Opt-in real sign-in. While enabled:false everyone signs in anonymously exactly as before.
 // To turn it on, follow "Stronger protection" in firebase-sync/SETUP.md first.
-const TEAM_AUTH = { enabled: false, email: '' };
+const TEAM_AUTH = { enabled: true, email: 'team@districttexter.example' };
 
 const SDK = 'https://www.gstatic.com/firebasejs/10.13.0/';
 const PENDING_KEY = 'districtTexter.pendingRosterOps.v1';
