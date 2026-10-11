@@ -24,6 +24,7 @@ const TEAM_AUTH = { enabled: true, email: 'team@districttexter.example' };
 const SDK = 'https://www.gstatic.com/firebasejs/10.13.0/';
 const PENDING_KEY = 'districtTexter.pendingRosterOps.v1';
 const PASS_KEY = 'districtTexter.teamPass.v1';
+const PENDING_SETTINGS_KEY = 'districtTexter.pendingSettings.v1';
 const BAD_CREDENTIAL = ['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials', 'auth/user-not-found', 'auth/invalid-email'];
 // Developer-only: set localStorage 'districtTexter.ns' to e.g. "t1-" to point the whole app at
 // throwaway documents (days/t1-2026-01-01, roster/t1-current, …) instead of the real ones.
@@ -118,7 +119,7 @@ if (!FIREBASE_CONFIG.projectId) {
     api.signInWithPasscode = async (pass) => {
       lsSet(PASS_KEY, pass);
       api.lastAuthError = '';
-      try { await auth.signInWithEmailAndPassword(authInst, TEAM_AUTH.email, pass); api.authed = true; api.needsPasscode = false; hadError = false; emit(); return true; }
+      try { await auth.signInWithEmailAndPassword(authInst, TEAM_AUTH.email, pass); api.authed = true; api.needsPasscode = false; hadError = false; emit(); flushPending(); return true; }
       catch (e) {
         api.lastAuthError = (e && e.code) || 'unknown';
         try { localStorage.removeItem(PASS_KEY); } catch (x) { /* ignore */ }
@@ -139,20 +140,25 @@ if (!FIREBASE_CONFIG.projectId) {
     // ---- today's document ----
     api.onDay = (dateKey, cb, onErr) => listen(ref('days', dateKey), cb, onErr);
     // values: { mall: number|null }, atMap: { mall: ms } — the newer stamp wins when phones disagree.
+    // Before the team passcode is entered nothing can be written. Sales, ticks and text logs stay on the
+    // phone and are reconciled from local state when the first snapshot arrives (see applyDayDoc).
     api.setSalesBatch = async (dateKey, values, atMap, by) => {
       await ready;
+      if (!api.authed) return;
       const latest = Object.keys(atMap).reduce((m, k) => Math.max(m, atMap[k] || 0), 0) || Date.now();
       await tracked(() => setDoc(ref('days', dateKey), { todaySales: values, salesAt: atMap, salesMeta: { at: latest, by: by || '' } }, { merge: true }));
     };
     // Nested plain objects, not dotted keys: setDoc(..., {merge:true}) deep-merges objects, but
     // treats a dotted string as one literal field name.
-    api.setTask = async (dateKey, taskKey, done, by) => {
+    api.setTask = async (dateKey, taskKey, done, by, at) => {
       await ready;
-      await tracked(() => setDoc(ref('days', dateKey), { tasks: { [taskKey]: { done, by, at: Date.now() } } }, { merge: true }));
+      if (!api.authed) return;
+      await tracked(() => setDoc(ref('days', dateKey), { tasks: { [taskKey]: { done, by, at: at || Date.now() } } }, { merge: true }));
     };
-    api.logText = async (dateKey, personKey, kind, by) => {
+    api.logText = async (dateKey, personKey, kind, by, at) => {
       await ready;
-      await tracked(() => setDoc(ref('days', dateKey), { texts: { [personKey]: { [kind]: { by: by || '', at: Date.now() } } } }, { merge: true }));
+      if (!api.authed) return;
+      await tracked(() => setDoc(ref('days', dateKey), { texts: { [personKey]: { [kind]: { by: by || '', at: at || Date.now() } } } }, { merge: true }));
     };
 
     // ---- roster (transactions so a stale phone can never overwrite fresher edits) ----
@@ -174,6 +180,10 @@ if (!FIREBASE_CONFIG.projectId) {
     }
     async function flushPending() {
       if (!online || !api.authed) return;
+      const ps = lsGet(PENDING_SETTINGS_KEY, {});
+      if (ps && Object.keys(ps).length) {
+        try { await tracked(() => setDoc(ref('roster', 'settings'), ps, { merge: true })); lsSet(PENDING_SETTINGS_KEY, {}); } catch (e) { /* keep for next time */ }
+      }
       let q = pendingOps();
       while (q.length) {
         try { await runRosterOp(q[0].op, q[0].by); q.shift(); lsSet(PENDING_KEY, q); }
@@ -187,7 +197,7 @@ if (!FIREBASE_CONFIG.projectId) {
       try { await runRosterOp(op, by); return { queued: false }; }
       catch (e) { q.push({ op, by }); lsSet(PENDING_KEY, q); emit(); return { queued: true, error: true }; }
     };
-    api.pendingCount = () => pendingOps().length;
+    api.pendingCount = () => pendingOps().length + (Object.keys(lsGet(PENDING_SETTINGS_KEY, {})).length ? 1 : 0);
     api.retry = async () => { hadError = false; if (!api.authed) await api.reconnect(); await flushPending(); emit(); };
     api.getRosterHistory = async () => {
       await ready;
@@ -197,8 +207,16 @@ if (!FIREBASE_CONFIG.projectId) {
 
     // ---- shared settings (LY, AOV, hours, time zones, hidden stores) ----
     api.onSettings = (cb, onErr) => listen(ref('roster', 'settings'), (d, m) => cb(d || {}, m), onErr);
+    function deepMerge(a, b) {
+      const o = Object.assign({}, a);
+      Object.keys(b || {}).forEach(k => {
+        o[k] = (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k])) ? deepMerge(o[k] && typeof o[k] === 'object' ? o[k] : {}, b[k]) : b[k];
+      });
+      return o;
+    }
     api.patchSettings = async (patch) => {
       await ready;
+      if (!api.authed) { lsSet(PENDING_SETTINGS_KEY, deepMerge(lsGet(PENDING_SETTINGS_KEY, {}), patch)); emit(); return; }
       await tracked(() => setDoc(ref('roster', 'settings'), patch, { merge: true }));
     };
 

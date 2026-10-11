@@ -500,7 +500,7 @@ function renderLive() {
   if (typing && signature() === lastSig) { syncInputsFromState(); refreshCards(); }
   else render();
 }
-function renderAll() { render(); renderContacts(); renderToday(); renderHidden(); }
+function renderAll() { render(); renderContacts(); renderToday(); }
 function updateCount() { $('n').textContent = sel.size; $('go').disabled = !sel.size; }
 
 // Delegated handlers (survive in-place refreshes).
@@ -575,12 +575,11 @@ function showPage(page) {
   $('appHeader').classList.toggle('on-send', page === 'pageSend');
   if (page === 'pageContacts') renderContacts();
   if (page === 'pageToday') { updateMyNameLabel(); renderToday(); if (!myName) openNameDlg(); }
-  if (page === 'pageSetup') renderHidden();
   syncDockPadding();
 }
 document.querySelectorAll('nav.tabbar button, .sidebarNav button').forEach(b => b.addEventListener('click', () => showPage(b.dataset.page)));
 
-// ================= Setup: templates, low sales, theme, hidden stores, version =================
+// ================= Setup: templates, low sales, theme, version =================
 let editingBucket = selectedBucket, tplKind = 'openers';
 function tplText(bucket, kind) {
   const t = templates[bucket];
@@ -625,20 +624,6 @@ document.querySelectorAll('#themeSeg button').forEach(b => {
     document.querySelectorAll('#themeSeg button').forEach(x => x.classList.remove('on'));
     b.classList.add('on'); applyTheme(themeChoice); lsSetStr(K.theme, themeChoice);
   });
-});
-
-function renderHidden() {
-  const names = Object.keys(ignoredStores).filter(h => ignoredStores[h]);
-  const el = $('hiddenList');
-  if (!names.length) { el.innerHTML = '<div class="cc-empty">No hidden stores. Removing a store in Contacts hides it here so it stops coming back with every report.</div>'; return; }
-  el.innerHTML = names.map(n => '<div class="hiddenRow"><span>' + esc(n) + '</span><button type="button" class="btn-clear" data-unhide="' + encodeURIComponent(n) + '">Show again</button></div>').join('');
-}
-$('hiddenList').addEventListener('click', e => {
-  const b = e.target.closest('[data-unhide]'); if (!b) return;
-  const name = decodeURIComponent(b.dataset.unhide);
-  ignoredStores[name] = false; lsSet(K.ignored, ignoredStores); renderHidden();
-  const S = sync(); if (S) S.patchSettings({ ignored: { [name]: false } }).catch(() => {});
-  setPasteMsg('"' + name + '" will come back with the next report.', '');
 });
 
 // ---- version + updates ----
@@ -1022,7 +1007,7 @@ document.addEventListener('click', e => {
 });
 
 function applyDayDoc(d) {
-  if (!d) return;
+  d = d || {};   // a day with no document yet still uploads what this phone already has
   let changed = false;
   {
     const cs = d.todaySales || {}, ca = d.salesAt || {};
@@ -1037,10 +1022,16 @@ function applyDayDoc(d) {
     const S = sync(); if (S && Object.keys(up).length) S.setSalesBatch(todayDateStr, up, upAt, myName).catch(() => {});
   }
   if (d.salesMeta && d.salesMeta.at && (d.salesMeta.at > (salesMeta.at || 0))) { salesMeta = d.salesMeta; changed = true; }
-  if (d.tasks) {
-    Object.keys(d.tasks).forEach(k => {
-      const c = d.tasks[k], l = teamTasks[k];
+  {
+    const cloudTasks = d.tasks || {}, S = sync();
+    Object.keys(cloudTasks).forEach(k => {
+      const c = cloudTasks[k], l = teamTasks[k];
       if (c && (!l || (c.at || 0) >= (l.at || 0)) && JSON.stringify(c) !== JSON.stringify(l)) { teamTasks[k] = Object.assign({ done: false, by: null, at: null }, c); changed = true; }
+    });
+    // A tick made while this phone couldn't reach the cloud (e.g. before the passcode) goes up now.
+    Object.keys(teamTasks).forEach(k => {
+      const l = teamTasks[k], c = cloudTasks[k];
+      if (S && l && l.at && (!c || l.at > (c.at || 0)) && !!l.done !== !!(c && c.done)) S.setTask(todayDateStr, k, !!l.done, l.by, l.at).catch(() => {});
     });
     lsSet(K.tasks, teamTasks);
   }
@@ -1049,6 +1040,13 @@ function applyDayDoc(d) {
       const c = d.texts[pk][kind], l = (textLog[pk] || {})[kind];
       if (c && (!l || (c.at || 0) > (l.at || 0))) { (textLog[pk] = textLog[pk] || {})[kind] = c; changed = true; }
     }); });
+  }
+  {
+    const S = sync(), cloudTexts = d.texts || {};
+    Object.keys(textLog).forEach(pk => Object.keys(textLog[pk] || {}).forEach(kind => {
+      const l = textLog[pk][kind], c = (cloudTexts[pk] || {})[kind];
+      if (S && l && l.at && (!c || l.at > (c.at || 0))) S.logText(todayDateStr, pk, kind, l.by, l.at).catch(() => {});
+    }));
     lsSet(K.texts, textLog);
   }
   saveSales();
@@ -1100,7 +1098,7 @@ function applySettingsDoc(s, meta) {
   if (changed) {
     saveLy(); saveAov(); lsSet(K.hours, storeHours); lsSet(K.tz, storeTz); lsSet(K.ignored, ignoredStores);
     for (let i = data.length - 1; i >= 0; i--) if (isHiddenName(data[i].mall)) data.splice(i, 1);
-    renderLive(); renderContacts(); renderToday(); renderHidden();
+    renderLive(); renderContacts(); renderToday();
   }
 }
 let unsubs = [], statusHooked = false;
@@ -1159,7 +1157,7 @@ if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
 $('dayLabel').textContent = DAY_FULL[todayIdx];
 updateMyNameLabel();
 loadEditor(); renderFloorLine(); loadLowEditor(); renderVersion();
-renderContacts(); renderToday(); renderHidden();
+renderContacts(); renderToday();
 render(); syncDockPadding(); updateBadges();
 checkForUpdate(false);
 
